@@ -3,7 +3,7 @@ title: "Github連携テスト"
 emoji: "📝"
 type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["Python"]
-published: true
+published: false
 ---
 
 # 概要
