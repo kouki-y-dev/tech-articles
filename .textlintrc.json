@@ -1,0 +1,11 @@
+{
+  "rules": {
+    "preset-ja-technical-writing": {
+      "no-exclamation-question-mark": false,
+      "ja-no-weak-phrase": false,
+      "max-ten": {
+        "max": 4
+      }
+    }
+  }
+}

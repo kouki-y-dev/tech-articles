@@ -2,9 +2,18 @@
   "scripts": {
     "new:article": "zenn new:article",
     "new:book": "zenn new:book",
-    "preview": "zenn preview"
+    "preview": "zenn preview",
+    "lint:zenn": "node scripts/check-zenn.mjs",
+    "lint:text": "textlint \"articles/**/*.md\"",
+    "lint": "npm run lint:zenn && npm run lint:text"
   },
   "dependencies": {
     "zenn-cli": "^0.5.2"
+  },
+  "devDependencies": {
+    "gray-matter": "^4.0.3",
+    "textlint": "^15.8.0",
+    "textlint-rule-preset-ja-technical-writing": "^12.0.2",
+    "zod": "^4.4.3"
   }
 }
