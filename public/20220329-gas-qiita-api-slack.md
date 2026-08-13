@@ -114,23 +114,23 @@ LGTM: ${article[j].likes_count}
 
 ## Qiita APIの設定
 
-Qiitaのアカウント設定からAPI用のトークンを生成します。詳しいやり方は下記参照
+Qiitaのアカウント設定からAPI用のトークンを生成します。詳しいやり方は下記を参照してください。
 
 https://qiita.com/miyuki_samitani/items/bfe89abb039a07e652e6
 
 1. 「設定」から「アプリケーション > 個人用アクセストークン > 新しくトークンを発行する」
 
 2. 「アクセストークンの発行」に飛ぶのでスコープを選ぶ
-今回は読み込みだけなので`read_qiita`だけでOK
+今回は読み込みだけなので`read_qiita`だけでOKです。
 
 3. アクセストークンが発行されるのでメモる（GASで使います）… ⓵
 
 ## Slackの設定
 
-1. [slackAPIのページ](https://api.slack.com/apps)に飛びます
-2. 「Create New App」から「From scratch」を選択
-3. 「App Name」に任意の名前、「Pick a workspace to develop your app in:」からBotを置きたいワークスペースを選択します
-4. 左袖の「Install App」に飛ぶ 「Bot User OAuth Token」をメモる（GASで使います）… ⓶
+1. [Slack APIのページ](https://api.slack.com/apps)にアクセスする
+2. 「Create New App」から「From scratch」を選択する
+3. 「App Name」に任意の名前を設定し、「Pick a workspace to develop your app in:」からBotを置きたいワークスペースを選択する
+4. 左メニューの「Install App」を開き、「Bot User OAuth Token」をメモする（GASで使用）… ⓶
 
 
 ## GASの設定
@@ -165,9 +165,9 @@ function get_article_data(tag) {
 }
 ```
 - `https://qiita.com/api/v2/tags/${tag}/items/?per_page=5&page=1`
-    - こちらのAPIで`${tag}`で検索かけた結果を収集できます
-    - `per_page=5&page=1`で「結果を5ページずつに分割した際の1ページ目」を取得できます。つまり最新の5件を持ってきてる感じです。
-    - `KEY_WORDS`の中身ををfor文で回して`${tag}`に渡してる感じです。
+    - このAPIにより、`${tag}`で検索した結果を収集できる
+    - `per_page=5&page=1`で「結果を5ページずつ分割した際の1ページ目」を取得できる。つまり最新の5件を取得する構成である
+    - `KEY_WORDS`の中身をfor文でループし、`${tag}`に渡す仕組みである
 
 ```js
 /**
@@ -201,8 +201,8 @@ LGTM: ${article[j].likes_count}
 }
 ```
 
-- `get_article_data`で受け取った結果を整形してslackに通知する関数です。
-- `KEY_WORDS`の単語単位でメッセージが送信される感じです。
+- `get_article_data`で受け取った結果を整形し、Slackへ通知する関数である
+- `KEY_WORDS`の単語単位でメッセージが送信される仕組みである
 
 # 実行結果
 
@@ -272,7 +272,7 @@ LGTM: 0
 https://qiita.com/777nancy/items/fa52e64e959155ac9884
 LGTM: 0
 ```
-上記のようなメッセージがSlackに投下されるようになります。
+上記のようなメッセージがSlackへ送信されます。
 後は`my_function`をトリガー設定して自動実行すれば自動で記事を投稿してくれるbotの完成です。
 
 # あとがき

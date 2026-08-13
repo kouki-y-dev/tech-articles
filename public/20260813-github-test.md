@@ -1,7 +1,8 @@
 ---
 title: 20260813-github-test.md
 tags:
-  - ''
+  - GitHub
+  - Qiita
 private: false
 updated_at: ''
 id: null
