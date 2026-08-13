@@ -2,7 +2,7 @@
 title: "Gemini Notebookに「キャラクターの人格」を構築し、Geminiで対話させるプロンプト術"
 emoji: "💬"
 type: "tech" # tech: 技術記事 / idea: アイデア
-topics: ["Gemini","Gemini Notebook","生成AI","プロンプトエンジニアリング","LLM"]
+topics: ["Gemini","GeminiNotebook","生成AI","プロンプトエンジニアリング","NotebookLM"]
 published: true
 ---
 
