@@ -1,7 +1,7 @@
 # Tech Articles Management
 
 Zenn および Qiita の技術記事・書籍を Markdown 形式で一元管理するためのリポジトリです。  
-現在は Zenn の記事管理に対応しており、GitHub 連携による自動投稿・更新運用を想定しています。
+GitHub 連携による自動投稿・更新および CI/CD による自動バリデーション運用に対応しています。
 
 ---
 
@@ -11,13 +11,19 @@ Zenn および Qiita の技術記事・書籍を Markdown 形式で一元管理�
 .
 ├── articles/                  # Zenn 記事ファイル (.md)
 ├── books/                     # Zenn 本・チャプター (必要に応じて利用)
+├── public/                    # Qiita 記事ファイル (.md)
 ├── scripts/
-│   └── check-zenn.mjs        # Zenn 記事フォーマットバリデータ
+│   ├── check-zenn.mjs         # Zenn 記事フォーマットバリデータ
+│   └── check-qiita.mjs        # Qiita 記事フォーマットバリデータ
 ├── .github/
 │   └── workflows/
-│       └── check-zenn.yml     # Zenn 記事チェック CI ワークフロー
-├── .textlintrc.json          # textlint 設定ファイル
-├── package.json               # 依存ライブラリ管理 (zenn-cli, textlint, zenn-model等)
+│       ├── check-zenn.yml     # Zenn 記事チェック CI ワークフロー
+│       ├── check-qiita.yml    # Qiita 記事チェック CI ワークフロー
+│       └── publish.yml        # Qiita 記事自動投稿 CI ワークフロー
+├── .textlintrc.json           # textlint 設定ファイル
+├── .textlintignore            # textlint 除外設定ファイル
+├── qiita.config.json          # Qiita CLI 設定ファイル
+├── package.json               # 依存ライブラリ管理 (zenn-cli, qiita-cli, textlint等)
 └── README.md
 ```
 
@@ -80,14 +86,14 @@ npx zenn preview
 記事の公開前に、フォーマットエラーや誤字脱字がないかローカルでチェックできます。
 
 ```bash
-# Zenn 記事フォーマットと文章校正を一括チェック
+# Zenn・Qiita 記事フォーマットと文章校正を一括チェック
 npm run lint
 
 # Zenn フォーマットチェックのみ（slug、Front Matterの型・必須項目）
 npm run lint:zenn
 
-# 日本語文章校正のみ（textlint）
-npm run lint:text
+# 日本語文章校正のみ（Zenn記事対象）
+npm run lint:text:zenn
 ```
 
 #### 5. 公開・更新手順
@@ -97,30 +103,56 @@ npm run lint:text
 
 ---
 
-## CI/CD (GitHub Actions)
+### Qiita
 
-Zenn 記事の品質保持のため、GitHub Actions で自動バリデーションを回しています。
+#### 1. 記事の新規作成
+以下のコマンドを実行すると、`public/` ディレクトリ配下に Qiita 記事の Markdown ファイルが生成されます。
 
-* **ワークフローファイル**: `.github/workflows/check-zenn.yml`
-* **実行タイミング**: 以下のファイルに変更があった Push / Pull Request 時
-  * `articles/**`
-  * `.github/workflows/check-zenn.yml`
-  * `scripts/check-zenn.mjs`
-  * `package.json`, `package-lock.json`, `.textlintrc*`
-* **チェック内容**:
-  1. **Zenn フォーマットチェック (`lint:zenn`)**:
-     * `articles/<slug>.md` の slug 命名規則（12〜50文字の小文字英数字・ハイフン・アンダースコア）
-     * Front Matter 項目 (`title`, `emoji`, `type`, `topics`, `published`) の型および値の妥当性
-  2. **文章校正 (`lint:text`)**:
-     * `textlint` (`textlint-rule-preset-ja-technical-writing`) による日本語技術文章のチェック
+```bash
+npx qiita new [basename]
+```
+
+#### 2. プレビュー表示
+執筆中の Qiita 記事をブラウザでプレビューできます。
+
+```bash
+npx qiita preview
+```
+実行後、表示されるローカルサーバー URL（デフォルト: [http://localhost:8888](http://localhost:8888)）にアクセスして確認します。
+
+#### 3. バリデーション（リント・文章校正）
+Qiita 記事の投稿前に、Front Matter のフォーマット（タイトル、タグ数 1〜5 個制限、公開設定等）および文章品質をチェックします。
+
+```bash
+# Qiita 記事フォーマットチェックのみ
+npm run lint:qiita
+
+# 日本語文章校正のみ（Qiita記事対象）
+npm run lint:text:qiita
+
+# Zenn・Qiita 一括チェック
+npm run lint
+```
+
+#### 4. 公開・更新手順
+1. `public/` 配下の対象記事の Front Matter (`private: false` 等) や本文を更新します。
+2. 変更を Git コミットし、`main` ブランチへプッシュします。
+3. GitHub Actions (`publish.yml`) により、自動で Qiita へ同期・投稿されます。
 
 ---
 
-### Qiita
+## CI/CD (GitHub Actions)
 
-> **Coming soon...**  
-> 将来的には `@qiita/qiita-cli` を導入し、Qiita 記事も本リポジトリで管理・自動同期できるように拡張予定です。
-> また、Qiita 記事用の CI ワークフロー (`check-qiita.yml`) も順次導入予定です。
+記事の品質保持および自動更新のため、GitHub Actions ワークフローを運用しています。
 
+### 1. Zenn 記事チェック (`check-zenn.yml`)
+* **実行タイミング**: `articles/**` 等に変更があった Push / Pull Request 時
+* **チェック内容**: Zenn フォーマットチェック (`npm run lint:zenn`) および文章校正 (`npm run lint:text:zenn`)
 
+### 2. Qiita 記事チェック (`check-qiita.yml`)
+* **実行タイミング**: `public/**` 等に変更があった Push / Pull Request 時
+* **チェック内容**: Qiita フォーマットチェック (`npm run lint:qiita`) および文章校正 (`npm run lint:text:qiita`)
 
+### 3. Qiita 記事自動投稿 (`publish.yml`)
+* **実行タイミング**: `main` ブランチに `public/**` の変更がプッシュされた時
+* **処理内容**: `increments/qiita-cli/actions/publish@v1` を利用して `QIITA_TOKEN` 経由で Qiita に記事を自動投稿・更新
