@@ -36,4 +36,4 @@ jobs:
         run: npm run lint:zenn
 
       - name: Check Text Quality (textlint)
-        run: npm run lint:text
+        run: npm run lint:text:zenn
