@@ -17,7 +17,7 @@ Zenn および Qiita の技術記事・書籍を Markdown 形式で一元管理�
 │   └── workflows/
 │       └── check-zenn.yml     # Zenn 記事チェック CI ワークフロー
 ├── .textlintrc.json          # textlint 設定ファイル
-├── package.json               # 依存ライブラリ管理 (zenn-cli, textlint, zod等)
+├── package.json               # 依存ライブラリ管理 (zenn-cli, textlint, zenn-model等)
 └── README.md
 ```
 
