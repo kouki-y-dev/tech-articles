@@ -1,0 +1,41 @@
+name: Check Qiita Articles
+
+on:
+  push:
+    paths:
+      - 'public/**'
+      - '.github/workflows/check-qiita.yml'
+      - 'scripts/check-qiita.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.textlintrc*'
+      - '.textlintignore'
+  pull_request:
+    paths:
+      - 'public/**'
+      - '.github/workflows/check-qiita.yml'
+      - 'scripts/check-qiita.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - '.textlintrc*'
+      - '.textlintignore'
+
+jobs:
+  check-qiita:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Check Qiita Article Format
+        run: npm run lint:qiita
+
+      - name: Check Text Quality (textlint)
+        run: npm run lint:text:qiita

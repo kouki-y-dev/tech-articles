@@ -4,8 +4,11 @@
     "new:book": "zenn new:book",
     "preview": "zenn preview",
     "lint:zenn": "node scripts/check-zenn.mjs",
-    "lint:text": "textlint \"articles/**/*.md\"",
-    "lint": "npm run lint:zenn && npm run lint:text"
+    "lint:qiita": "node scripts/check-qiita.mjs",
+    "lint:text": "textlint \"{articles,public}/**/*.md\"",
+    "lint:text:zenn": "textlint \"articles/**/*.md\"",
+    "lint:text:qiita": "textlint \"public/**/*.md\"",
+    "lint": "npm run lint:zenn && npm run lint:qiita && npm run lint:text"
   },
   "dependencies": {
     "@qiita/qiita-cli": "^1.10.0",
