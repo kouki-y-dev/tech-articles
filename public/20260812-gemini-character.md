@@ -7,11 +7,13 @@ tags:
   - プロンプトエンジニアリング
   - NotebookLM
 private: false
-updated_at: null
-id: null
+updated_at: '2026-08-13T23:23:27+09:00'
+id: 12610ddbca97891c7484
 organization_url_name: null
 slide: false
 ignorePublish: false
+posting_campaign_uuid: null
+agreed_posting_campaign_term: false
 ---
 :::note info
 この記事は [Gemini Notebookに「キャラクターの人格」を構築し、Geminiで対話させるプロンプト術](https://zenn.dev/yymm/articles/20260812-gemini-character) からのクロスポスト（マルチポスト）記事です。
