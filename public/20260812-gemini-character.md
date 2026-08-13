@@ -13,6 +13,9 @@ organization_url_name: null
 slide: false
 ignorePublish: false
 ---
+:::note info
+この記事は [Gemini Notebookに「キャラクターの人格」を構築し、Geminiで対話させるプロンプト術](https://zenn.dev/yymm/articles/20260812-gemini-character) からのクロスポスト（マルチポスト）記事です。
+:::
 
 ## プロンプトだけ知りたい人
 
