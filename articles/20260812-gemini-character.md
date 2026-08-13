@@ -1,7 +1,7 @@
 ---
 title: "NotebookLMに「キャラクターの人格」を構築し、Geminiで対話させるプロンプト術"
 emoji: "💬"
-type: "idea" # tech: 技術記事 / idea: アイデア
+type: "tech" # tech: 技術記事 / idea: アイデア
 topics: ["Gemini","NotebookLM","生成AI","プロンプトエンジニアリング","LLM"]
 published: true
 ---
