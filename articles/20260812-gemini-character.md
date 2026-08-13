@@ -1,8 +1,8 @@
 ---
-title: "NotebookLMに「キャラクターの人格」を構築し、Geminiで対話させるプロンプト術"
+title: "Gemini Notebookに「キャラクターの人格」を構築し、Geminiで対話させるプロンプト術"
 emoji: "💬"
 type: "tech" # tech: 技術記事 / idea: アイデア
-topics: ["Gemini","NotebookLM","生成AI","プロンプトエンジニアリング","LLM"]
+topics: ["Gemini","Gemini Notebook","生成AI","プロンプトエンジニアリング","LLM"]
 published: true
 ---
 
@@ -10,7 +10,7 @@ published: true
 
 キャラクター名や作品名は各々置き換えてお使いください。
 
-### NotebookLM Fast Research用のプロンプト
+### Gemini Notebook Fast Research用のプロンプト
 
 #### 基本設定・プロフィール
 
@@ -30,7 +30,7 @@ published: true
 (キャラクター名)が活躍する主なエピソード、性格や行動パターンの考察・解説記事を収集
 ```
 
-### NotebookLM カスタム指示テンプレート
+### Gemini Notebook カスタム指示テンプレート
 
 ```
 # あなたの役割
@@ -73,7 +73,7 @@ published: true
 
 [NotebookLMで雇った26人の従業員と一緒に仕事をしている話](https://x.com/i/status/2070615064831545515)
 
-内容としては、NotebookLMで複数の従業員の人格を構築し、Geminiのチャットで会話させるというものになります。
+内容としては、Gemini Notebook(旧NotebookLM)で複数の従業員の人格を構築し、Geminiのチャットで会話させるというものになります。
 例えばですが、経営戦略担当と相談役の人格を構築しておいて、事業の相談をGeminiで行うというものです。
 
 こちらの記事を拝見した際、自分の中でひらめきが出ました。
@@ -86,15 +86,15 @@ published: true
 
 実際の作業手順を追いながら説明します。
 
-### 1.NotebookLM でキャラクターの人格を形成
+### 1.Gemini Notebook でキャラクターの人格を形成
 
 #### Fast Research で情報収集
 
-まず、人格の形成にはNotebookLMのFast Research機能を利用します。
+まず、人格の形成にはGemini NotebookのFast Research機能を利用します。
 指示したプロンプトを下に、Web上から自動でデータソースを持ってきてくれる機能です。
 これを利用し、キャラクターのプロフィールや性格、口調等の情報を持ってきます。
 
-NotebookLMを開いたあと、「ソースを追加」からFast Researchを選ぶことができます。
+Gemini Notebookを開いたあと、「ソースを追加」からFast Researchを選ぶことができます。
 ![fast research](/images/20260812-gemini-character/fast_research.png)
 
 用意したプロンプトは3つ。これを順番に使用しデータソースを収集します。
@@ -119,7 +119,7 @@ NotebookLMを開いたあと、「ソースを追加」からFast Researchを選
 #### カスタム指示を設定
 
 データソースを収集したあと、カスタム指示機能を設定してデータソース通りになりきるように指示します。
-カスタム指示とは、NotebookLMごとにどのように回答するかを指示できる機能です。
+カスタム指示とは、Gemini Notebookごとにどのように回答するかを指示できる機能です。
 
 データソースを与えた後、「チャットを設定」からカスタム指示を設定できます。
 ![custom](/images/20260812-gemini-character/lm_custom.png)
@@ -142,15 +142,15 @@ NotebookLMを開いたあと、「ソースを追加」からFast Researchを選
 ・AIとしてのメタ発言は絶対に禁止します。
 ```
 
-この時点でNotebookLMと会話すると、そのキャラクターとしての返答が返ってくると思われます。
+この時点でGemini Notebookと会話すると、そのキャラクターとしての返答が返ってくると思われます。
 
 ### 2.Geminiに降臨させて会話させる
 
-ここからが今回の真骨頂です。NotebookLM に構築したキャラクターの人格をGeminiに降臨させて会話させます。いざ、夢のコラボ。
-今回はGeminiの機能を利用してNotebookLMをデータソースにすることでこれを實現します。
+ここからが今回の真骨頂です。Gemini Notebook に構築したキャラクターの人格をGeminiに降臨させて会話させます。いざ、夢のコラボ。
+今回はGeminiの機能を利用してGemini Notebookをデータソースにすることでこれを實現します。
 ![lm_datasource](/images/20260812-gemini-character/lm_datasource.png)
 
-チャットから先程構築したキャラクターのNotebookLMをデータソースに指定しつつ、プロンプトで以下を与えることで会話を実現します。
+チャットから先程構築したキャラクターのGemini Notebookをデータソースに指定しつつ、プロンプトで以下を与えることで会話を実現します。
 Geminiには会話の進行役を担当してもらうイメージです。
 
 ```
@@ -262,7 +262,7 @@ Geminiには会話の進行役を担当してもらうイメージです。
 なので改良後のプロンプトでは「表面的な言葉尻を真似るのではなく、そのキャラクターの思考回路を真似る」ということを強調しています。
 
 
-### 改良前プロンプト(NotebookLM カスタム指示)
+### 改良前プロンプト(Gemini Notebook カスタム指示)
 
 ```
 # あなたの役割
