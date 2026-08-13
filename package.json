@@ -8,6 +8,7 @@
     "lint": "npm run lint:zenn && npm run lint:text"
   },
   "dependencies": {
+    "@qiita/qiita-cli": "^1.10.0",
     "zenn-cli": "^0.5.2"
   },
   "devDependencies": {
