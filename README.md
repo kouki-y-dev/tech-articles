@@ -9,9 +9,15 @@ Zenn および Qiita の技術記事・書籍を Markdown 形式で一元管理�
 
 ```text
 .
-├── articles/       # Zenn 記事ファイル (.md)
-├── books/          # Zenn 本・チャプター (必要に応じて利用)
-├── package.json    # 依存ライブラリ管理 (zenn-cli)
+├── articles/                  # Zenn 記事ファイル (.md)
+├── books/                     # Zenn 本・チャプター (必要に応じて利用)
+├── scripts/
+│   └── check-zenn.mjs        # Zenn 記事フォーマットバリデータ
+├── .github/
+│   └── workflows/
+│       └── check-zenn.yml     # Zenn 記事チェック CI ワークフロー
+├── .textlintrc.json          # textlint 設定ファイル
+├── package.json               # 依存ライブラリ管理 (zenn-cli, textlint, zenn-model等)
 └── README.md
 ```
 
@@ -70,10 +76,43 @@ npx zenn preview
 ```
 実行後、 [http://localhost:8000](http://localhost:8000) にアクセスして確認します。
 
-#### 4. 公開・更新手順
+#### 4. バリデーション（リント・文章校正）
+記事の公開前に、フォーマットエラーや誤字脱字がないかローカルでチェックできます。
+
+```bash
+# Zenn 記事フォーマットと文章校正を一括チェック
+npm run lint
+
+# Zenn フォーマットチェックのみ（slug、Front Matterの型・必須項目）
+npm run lint:zenn
+
+# 日本語文章校正のみ（textlint）
+npm run lint:text
+```
+
+#### 5. 公開・更新手順
 1. 記事ファイル内の Frontmatter（ヘッダー部分）の `published:` を `true` に設定します。
 2. 変更を Git コミットし、GitHub の対象ブランチ（`main` 等）へプッシュします。
 3. Zenn と GitHub の連携設定により、自動的に記事が公開・更新されます。
+
+---
+
+## CI/CD (GitHub Actions)
+
+Zenn 記事の品質保持のため、GitHub Actions で自動バリデーションを回しています。
+
+* **ワークフローファイル**: `.github/workflows/check-zenn.yml`
+* **実行タイミング**: 以下のファイルに変更があった Push / Pull Request 時
+  * `articles/**`
+  * `.github/workflows/check-zenn.yml`
+  * `scripts/check-zenn.mjs`
+  * `package.json`, `package-lock.json`, `.textlintrc*`
+* **チェック内容**:
+  1. **Zenn フォーマットチェック (`lint:zenn`)**:
+     * `articles/<slug>.md` の slug 命名規則（12〜50文字の小文字英数字・ハイフン・アンダースコア）
+     * Front Matter 項目 (`title`, `emoji`, `type`, `topics`, `published`) の型および値の妥当性
+  2. **文章校正 (`lint:text`)**:
+     * `textlint` (`textlint-rule-preset-ja-technical-writing`) による日本語技術文章のチェック
 
 ---
 
@@ -81,5 +120,7 @@ npx zenn preview
 
 > **Coming soon...**  
 > 将来的には `@qiita/qiita-cli` を導入し、Qiita 記事も本リポジトリで管理・自動同期できるように拡張予定です。
+> また、Qiita 記事用の CI ワークフロー (`check-qiita.yml`) も順次導入予定です。
+
 
 
