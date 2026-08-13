@@ -10,9 +10,10 @@ description: >-
 Qiita CLI形式（`public/*.md`）と Zenn CLI形式（`articles/*.md`）の記事ファイルを相互変換し、メタデータ・本文記法・画像パスを適切に移植します。
 
 > [!NOTE]
-> **画像ファイルの自動同期＆ダウンロード**:
-> - **ローカル画像**: `public/images/` 配下や相対パスの画像は、Zenn変換時にルート直下の `images/<slug>/` ディレクトリへ自動コピーされます。
-> - **リモート画像 (Qiita Image Store / CloudFront等)**: Web上の画像URL（`https://qiita-image-store...` など）も自動ダウンロードされ、`images/<slug>/` 配下に保存・パス書き換えが行われます。
+> **画像ファイルの一元管理＆直参照**:
+> - **画像ファイル管理**: すべての画像ファイル（ローカル画像・リモート画像）は、プロジェクトルート直下の `images/<slug>/` ディレクトリに一元保存されます。
+> - **Qiita 記事での画像パス**: Qiita 記事（`public/*.md`）では GitHub の Raw 画像 URL（`https://raw.githubusercontent.com/yama0308/tech-articles/main/images/<slug>/<filename>`）へ自動変換され、直参照されます。
+> - **Zenn 記事での画像パス**: Zenn 記事（`articles/*.md`）では `/images/<slug>/<filename>` へ自動変換されます。
 
 ## 変換手順
 

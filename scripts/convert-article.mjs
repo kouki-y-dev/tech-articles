@@ -52,6 +52,7 @@ function convertBody(content, targetFormat) {
 async function convertImages(body, slug, sourceFormat, targetFormat, sourceDir) {
   let updatedBody = body;
   const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
+  const rawBaseUrl = process.env.GITHUB_RAW_BASE_URL || 'https://raw.githubusercontent.com/yama0308/tech-articles/main';
 
   const matches = [];
   let match;
@@ -66,108 +67,69 @@ async function convertImages(body, slug, sourceFormat, targetFormat, sourceDir) 
   for (const { fullMatch, altText, imagePath } of matches) {
     const isRemote = imagePath.startsWith('http://') || imagePath.startsWith('https://');
 
+    let imgName = isRemote
+      ? path.basename(new URL(imagePath).pathname)
+      : path.basename(imagePath);
+
+    if (!path.extname(imgName)) {
+      imgName = `${imgName || 'image'}.png`;
+    }
+
+    // Always keep images in root `images/${slug}`
+    const targetAbsDir = path.join(process.cwd(), 'images', slug);
+    const targetAbsPath = path.join(targetAbsDir, imgName);
+    fs.mkdirSync(targetAbsDir, { recursive: true });
+
+    let targetUrl = '';
     if (targetFormat === 'zenn') {
-      let imgName = isRemote
-        ? path.basename(new URL(imagePath).pathname)
-        : path.basename(imagePath);
-
-      if (!path.extname(imgName)) {
-        imgName = `${imgName || 'image'}.png`;
-      }
-
-      const targetRelPath = `/images/${slug}/${imgName}`;
-      const targetAbsDir = path.join(process.cwd(), 'images', slug);
-      const targetAbsPath = path.join(targetAbsDir, imgName);
-
-      fs.mkdirSync(targetAbsDir, { recursive: true });
-
-      if (isRemote) {
-        try {
-          console.log(`🌐 Downloading remote image: ${imagePath} -> ${targetAbsPath}`);
-          const res = await fetch(imagePath);
-          if (res.ok) {
-            const buffer = Buffer.from(await res.arrayBuffer());
-            fs.writeFileSync(targetAbsPath, buffer);
-            console.log(`📥 Saved remote image: ${targetAbsPath}`);
-            updatedBody = updatedBody.replace(fullMatch, `![${altText}](${targetRelPath})`);
-          } else {
-            console.warn(`⚠️ Failed to fetch remote image: ${imagePath} (HTTP ${res.status})`);
-          }
-        } catch (err) {
-          console.warn(`⚠️ Download error for ${imagePath}: ${err.message}`);
-        }
-      } else {
-        const candidatePaths = [
-          path.resolve(sourceDir, imagePath),
-          path.join(process.cwd(), imagePath),
-          path.join(process.cwd(), 'public', imagePath),
-          path.join(process.cwd(), 'public', 'images', imagePath),
-          path.join(process.cwd(), 'public', 'images', slug, imgName),
-          path.join(process.cwd(), 'public', 'images', imgName),
-          path.join(process.cwd(), 'images', slug, imgName),
-          path.join(process.cwd(), 'images', imgName),
-        ];
-
-        const srcFile = candidatePaths.find((p) => fs.existsSync(p));
-
-        if (srcFile) {
-          fs.copyFileSync(srcFile, targetAbsPath);
-          console.log(`📷 Copied local image: ${srcFile} -> ${targetAbsPath}`);
-        } else {
-          console.warn(`⚠️ Source image not found: ${imagePath}`);
-        }
-        updatedBody = updatedBody.replace(fullMatch, `![${altText}](${targetRelPath})`);
-      }
+      targetUrl = `/images/${slug}/${imgName}`;
     } else if (targetFormat === 'qiita') {
-      let imgName = isRemote
-        ? path.basename(new URL(imagePath).pathname)
-        : path.basename(imagePath);
+      targetUrl = `${rawBaseUrl}/images/${slug}/${imgName}`;
+    }
 
-      if (!path.extname(imgName)) {
-        imgName = `${imgName || 'image'}.png`;
+    if (isRemote) {
+      // If it's already a github raw url matching our repo, we don't need to re-download if local exists
+      if (imagePath.startsWith(rawBaseUrl)) {
+        updatedBody = updatedBody.replace(fullMatch, `![${altText}](${targetUrl})`);
+        continue;
       }
 
-      const targetRelPath = `./images/${slug}/${imgName}`;
-      const targetAbsDir = path.join(process.cwd(), 'public', 'images', slug);
-      const targetAbsPath = path.join(targetAbsDir, imgName);
-
-      fs.mkdirSync(targetAbsDir, { recursive: true });
-
-      if (isRemote) {
-        try {
-          console.log(`🌐 Downloading remote image: ${imagePath} -> ${targetAbsPath}`);
-          const res = await fetch(imagePath);
-          if (res.ok) {
-            const buffer = Buffer.from(await res.arrayBuffer());
-            fs.writeFileSync(targetAbsPath, buffer);
-            console.log(`📥 Saved remote image: ${targetAbsPath}`);
-            updatedBody = updatedBody.replace(fullMatch, `![${altText}](${targetRelPath})`);
-          } else {
-            console.warn(`⚠️ Failed to fetch remote image: ${imagePath} (HTTP ${res.status})`);
-          }
-        } catch (err) {
-          console.warn(`⚠️ Download error for ${imagePath}: ${err.message}`);
+      try {
+        console.log(`🌐 Downloading remote image: ${imagePath} -> ${targetAbsPath}`);
+        const res = await fetch(imagePath);
+        if (res.ok) {
+          const buffer = Buffer.from(await res.arrayBuffer());
+          fs.writeFileSync(targetAbsPath, buffer);
+          console.log(`📥 Saved remote image: ${targetAbsPath}`);
+          updatedBody = updatedBody.replace(fullMatch, `![${altText}](${targetUrl})`);
+        } else {
+          console.warn(`⚠️ Failed to fetch remote image: ${imagePath} (HTTP ${res.status})`);
         }
-      } else {
-        const candidatePaths = [
-          path.resolve(sourceDir, imagePath),
-          path.join(process.cwd(), imagePath),
-          path.join(process.cwd(), 'public', imagePath),
-          path.join(process.cwd(), 'public', 'images', imagePath),
-          path.join(process.cwd(), 'public', 'images', slug, imgName),
-          path.join(process.cwd(), 'images', slug, imgName),
-        ];
+      } catch (err) {
+        console.warn(`⚠️ Download error for ${imagePath}: ${err.message}`);
+      }
+    } else {
+      const candidatePaths = [
+        path.resolve(sourceDir, imagePath),
+        path.join(process.cwd(), imagePath),
+        path.join(process.cwd(), 'public', imagePath),
+        path.join(process.cwd(), 'public', 'images', imagePath),
+        path.join(process.cwd(), 'public', 'images', slug, imgName),
+        path.join(process.cwd(), 'images', slug, imgName),
+        path.join(process.cwd(), 'images', imgName),
+      ];
 
-        const srcFile = candidatePaths.find((p) => fs.existsSync(p));
+      const srcFile = candidatePaths.find((p) => fs.existsSync(p));
 
-        if (srcFile) {
+      if (srcFile) {
+        if (srcFile !== targetAbsPath) {
           fs.copyFileSync(srcFile, targetAbsPath);
           console.log(`📷 Copied local image: ${srcFile} -> ${targetAbsPath}`);
-        } else {
-          console.warn(`⚠️ Source image not found: ${imagePath}`);
         }
-        updatedBody = updatedBody.replace(fullMatch, `![${altText}](${targetRelPath})`);
+      } else {
+        console.warn(`⚠️ Source image not found: ${imagePath}`);
       }
+      updatedBody = updatedBody.replace(fullMatch, `![${altText}](${targetUrl})`);
     }
   }
 
