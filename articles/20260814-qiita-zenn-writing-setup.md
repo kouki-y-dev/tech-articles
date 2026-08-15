@@ -1,3 +1,11 @@
+---
+title: "ZennとQiitaの記法差分をAI Agent SkillとGitHub Actionsで吸収する仕組みを作った"
+emoji: "📃"
+type: "tech" # tech: 技術記事 / idea: アイデア
+topics: ["Qiita","Zenn"]
+published: true
+---
+
 ## はじめに
 
 「とにかく楽に技術記事を書きたい！！！！！！！」
@@ -52,11 +60,101 @@
 
 ### ディレクトリ構成
 
+Qiita記事を`public`、Zenn記事を`articles`に配置し、画像ファイルは`images`に配置することで一元管理できるようにしました。
+CI/CD や Agents Skill で校閲・デプロイを自動化することで、記事の作成に集中できる環境を整えました。
+
+```
+.
+├── .agents/
+│   └── skills/                # AI エージェント用 Agent Skills
+│       ├── article-converter/   # Zenn ↔ Qiita 記事相互変換スキル
+│       └── article-proofreader/ # 記事文章・フォーマット校閲スキル
+├── articles/                  # Zenn 記事ファイル (.md)
+├── books/                     # Zenn 本・チャプター (必要に応じて利用)
+├── images/                    # 記事用画像の一元保存ディレクトリ
+├── public/                    # Qiita 記事ファイル (.md)
+├── scripts/
+│   ├── check-zenn.mjs         # Zenn 記事フォーマットバリデータ
+│   ├── check-qiita.mjs        # Qiita 記事フォーマットバリデータ
+│   └── convert-article.mjs    # Zenn ↔ Qiita 記事相互変換スクリプト
+├── .github/
+│   └── workflows/
+│       ├── check-zenn.yml     # Zenn 記事チェック CI ワークフロー
+│       ├── check-qiita.yml    # Qiita 記事チェック CI ワークフロー
+│       └── publish.yml        # Qiita 記事自動投稿 CI ワークフロー
+├── .textlintrc.json           # textlint 設定ファイル
+├── .textlintignore            # textlint 除外設定ファイル
+├── qiita.config.json          # Qiita CLI 設定ファイル
+├── package.json               # 依存ライブラリ管理 (zenn-cli, qiita-cli, textlint等)
+└── README.md
+```
+
 
 ### 記事執筆・公開(Zenn CLI & Qiita CLI)
 
+記事の執筆・公開はZenn CLIとQiita CLIを使用しています。
+以下手順でQiitaかZennの対応する方の環境の記事を開始できます。
+
+```sh
+# Zennで記事を作成する
+npx zenn new:article
+
+# Qiitaで記事を作成する
+npx qiita new
+```
+
+公開はmainにマージされれば自動で双方対応するサイトに投稿されるようになっています。
+Qiitaには自動公開用のCI/CDを構築しており、ZennはGithub連携を利用して公開・更新を行っています。
 
 ### CI/CD
 
+Github ActionsによるCI/CDを構築しています。
+主なワークフローは以下です。
 
-### Agents Skill
+#### Qiita 自動デプロイ
+
+前述の通り、Qiitaには自動公開用のCI/CDを構築しています。
+main へのプッシュで起動し、`public/`以下の.mdファイルをQiitaに自動投稿するようになっています。
+
+#### フォーマットチェック - Qiita & Zenn
+
+Qiita、Zennそれぞれプッシュ時にフォーマットチェックが走るようになっています。
+ぞれぞれの媒体のフォーマットに合っているかをチェックしつつ、textlint による日本語チェックを行っています。
+
+`scripts/check-qiita.mjs` `scripts/check-zenn.mjs`でこれらのフォーマットチェックが実行されます。
+
+
+### Agents Skills
+
+ここからが個人的に最も気に入っている工夫点になります。
+執筆作業をサポートするためのAgents Skillsを用意しました。
+
+#### 記事の自動添削・校閲スキル
+
+エージェント自身に記事を添削してもらうようにスキル化を行っています。
+Linterを定義したことにより、再現性の高い文章添削が可能になりました。
+
+毎回毎回添削の指示を出す必要もなくなり、環境が変わっても再現性のある添削が可能になったのが非常に便利です。
+
+
+#### Qiita⇔Zennの記事フォーマット相互変換スキル
+
+これが一番お気に入りの機能です。
+QiitaとZennの記事を両投稿する際、多くの方がフォーマットの違いに苦しんだと思うのですが、今回はスキルを導入する事で解決しました。
+
+このスキルでは、QiitaとZennのフォーマットの違いを解決してくれます。
+片方の記事を記述後、このスキルを実行する事でもう片方の記事が生成されます。
+これにより、Zennの記事を書いた後にQiitaにも同じ内容の記事を投稿したい場合でも容易に対応できます。
+
+単純なフォーマットや記法の違いだけでなく、画像パスの違いもこちらのスキルで吸収してくれます。
+Qiitaの記事ではこのリポジトリをパブリックリポジトリにして `images/`を直接参照する事で画像を表示させているのですが、Zennの記事からフォーマット変換する際に画像パスの調整も行ってくれるようになっています。
+
+## 終わりに
+
+実際にこの環境を運用して少し経ちましたが、快適で非常に気に入っています。
+お盆休み中、オフラインで執筆するタイミングがあったのですが、この環境のおかげで作業が非常に捗りました。
+AIのサポートもすぐに受けれるようになった事も現代の作業の進め方に追いつけてる感があって良きです。
+
+今後アウトプットする機会を増やしたいと思っていたのですが、やはり自動化しまくってハードルを下げるのが第一歩だなと感じました。
+
+『記事を書きたいけど面倒……』と感じている方は、まず執筆環境の自動化から試してみてはいかがでしょうか！ この記事が誰かの『アウトプットの一歩』になれば幸いです！
