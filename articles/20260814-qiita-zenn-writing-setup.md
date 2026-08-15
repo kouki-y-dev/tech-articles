@@ -2,7 +2,7 @@
 title: "「記事書くの面倒」を解消！Agent Skills×GitHub ActionsでQiita/Zennの執筆環境を作った"
 emoji: "🤖"
 type: "tech" # tech: 技術記事 / idea: アイデア
-topics: ["Zenn", "Qiita", "生成AI"]
+topics: ["Zenn", "Qiita", "agentskills", "生成AI", "ライティング"]
 published: true
 ---
 
