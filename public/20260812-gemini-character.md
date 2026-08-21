@@ -7,7 +7,7 @@ tags:
   - プロンプトエンジニアリング
   - NotebookLM
 private: false
-updated_at: '2026-08-13T23:23:27+09:00'
+updated_at: '2026-08-21T21:52:05+09:00'
 id: 12610ddbca97891c7484
 organization_url_name: null
 slide: false

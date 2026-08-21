@@ -3,15 +3,17 @@ title: 「記事書くの面倒」を解消！Agent Skills×GitHub ActionsでQii
 tags:
   - Zenn
   - Qiita
-  - agentskills
+  - AgentSkills
   - 生成AI
   - ライティング
 private: false
-updated_at: null
-id: null
+updated_at: '2026-08-21T21:52:05+09:00'
+id: 3c75e3e81afeee57ea05
 organization_url_name: null
 slide: false
 ignorePublish: false
+posting_campaign_uuid: null
+agreed_posting_campaign_term: false
 ---
 :::note info
 本記事は [「記事書くの面倒」を解消！Agent Skills×GitHub ActionsでQiita/Zennの執筆環境を作った](https://zenn.dev/yymm/articles/20260821-qiita-zenn-writing-setup) からのクロスポスト記事です。
