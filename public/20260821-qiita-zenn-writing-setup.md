@@ -1,8 +1,8 @@
 ---
-title: 「記事書くの面倒」を解消！Agent Skills×GitHub ActionsでQiita/Zennの執筆環境を作った
+title: QiitaとZennを一元管理！GitHub ActionsとAgent Skillsで実現する技術記事執筆環境
 tags:
-  - Zenn
   - Qiita
+  - Zenn
   - AgentSkills
   - 生成AI
   - ライティング

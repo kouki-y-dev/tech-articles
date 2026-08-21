@@ -1,5 +1,5 @@
 ---
-title: Gemini Notebookに「キャラクターの人格」を構築し、Geminiで対話させるプロンプト術
+title: 【プロンプト付】Gemini Notebookでキャラの人格を再現し、Gemini上でAI同士を掛け合いさせる方法
 tags:
   - Gemini
   - GeminiNotebook
