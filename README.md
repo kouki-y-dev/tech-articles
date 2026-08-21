@@ -162,7 +162,7 @@ npm run lint
 
 | スキル名 | ディレクトリ | 概要 |
 | :--- | :--- | :--- |
-| [**article-converter**](.agents/skills/article-converter/SKILL.md) | `.agents/skills/article-converter` | Zenn 記事（`articles/`）と Qiita 記事（`public/`）の相互変換（メタデータ・画像パス・記法の変換） |
+| [**article-converter**](.agents/skills/article-converter/SKILL.md) | `.agents/skills/article-converter` | Zenn 記事（`articles/`）と Qiita 記事（`public/`）の相互変換（プラットフォーム別タイトル最適化・クロスポスト注記・メタデータ・画像パス・記法変換） |
 | [**article-proofreader**](.agents/skills/article-proofreader/SKILL.md) | `.agents/skills/article-proofreader` | 原文の主張・トーンを変えずに、誤字脱字・文法・リンターエラーのみを安全に校閲・修正 |
 
 ### スキルの詳細と主な機能
@@ -171,6 +171,8 @@ npm run lint
 - **主な用途**: 「Qiita の記事を Zenn 用に移植して」「Zenn の記事を Qiita 用に変換して」といった操作に対応します。
 - **特徴**:
   - `convert-article.mjs` を利用し、Front Matter（`tags` ↔ `topics` / `emoji` / `type`）や記法を相互変換。
+  - プラットフォームの特性に合わせてタイトルを再考・最適化（Qiita: 検索性・SEO・実用性重視 / Zenn: キャッチーさ・DX・体験談重視）。
+  - 本文冒頭に親記事へのクロスポスト（転載元）リンク・説明文（Qiita: `:::note info` / Zenn: `:::message`）を自動付与。
   - 画像ファイルは `images/<slug>/` ディレクトリに一元管理し、Qiita 用には Raw GitHub URL、Zenn 用には `/images/...` へ自動変換。
   - 変換後に自動でバリデータ（`npm run lint:zenn` または `npm run lint:qiita`）を実行して整合性を検証。
 
