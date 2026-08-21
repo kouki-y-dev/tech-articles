@@ -14,7 +14,7 @@ slide: false
 ignorePublish: false
 ---
 :::note info
-この記事は [「記事書くの面倒」を解消！Agent Skills×GitHub ActionsでQiita/Zennの執筆環境を作った](https://zenn.dev/yymm/articles/20260821-qiita-zenn-writing-setup) からのクロスポスト（マルチポスト）記事です。
+本記事は [「記事書くの面倒」を解消！Agent Skills×GitHub ActionsでQiita/Zennの執筆環境を作った](https://zenn.dev/yymm/articles/20260821-qiita-zenn-writing-setup) からのクロスポスト記事です。
 
 :::
 
