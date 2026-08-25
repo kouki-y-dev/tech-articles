@@ -32,7 +32,7 @@ agreed_posting_campaign_term: false
 今回は記事執筆のハードルをできる限り下げるため、DX(Developer Experience)に取り組んだ記録をお送りします。
 
 最終的な成果物としては下記リポジトリが爆誕しました。
-https://github.com/yama0308/tech-articles
+https://github.com/kouki-y-dev/tech-articles
 
 ## 感じていた課題・叶えたいこと
 
@@ -65,7 +65,7 @@ https://github.com/yama0308/tech-articles
 ## 作ったもの
 
 これらの願いを叶えるために構築した執筆環境がこちらのリポジトリになります。
-https://github.com/yama0308/tech-articles
+https://github.com/kouki-y-dev/tech-articles
 
 大きく分けて以下の機能をサポートしています。
 

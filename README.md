@@ -1,8 +1,8 @@
 # Tech Articles Management
 
-[![Check Zenn Articles](https://github.com/yama0308/tech-articles/actions/workflows/check-zenn.yml/badge.svg)](https://github.com/yama0308/tech-articles/actions/workflows/check-zenn.yml)
-[![Check Qiita Articles](https://github.com/yama0308/tech-articles/actions/workflows/check-qiita.yml/badge.svg)](https://github.com/yama0308/tech-articles/actions/workflows/check-qiita.yml)
-[![Publish Articles](https://github.com/yama0308/tech-articles/actions/workflows/publish.yml/badge.svg)](https://github.com/yama0308/tech-articles/actions/workflows/publish.yml)
+[![Check Zenn Articles](https://github.com/kouki-y-dev/tech-articles/actions/workflows/check-zenn.yml/badge.svg)](https://github.com/kouki-y-dev/tech-articles/actions/workflows/check-zenn.yml)
+[![Check Qiita Articles](https://github.com/kouki-y-dev/tech-articles/actions/workflows/check-qiita.yml/badge.svg)](https://github.com/kouki-y-dev/tech-articles/actions/workflows/check-qiita.yml)
+[![Publish Articles](https://github.com/kouki-y-dev/tech-articles/actions/workflows/publish.yml/badge.svg)](https://github.com/kouki-y-dev/tech-articles/actions/workflows/publish.yml)
 ![Node.js Version](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-339933?style=flat-square&logo=node.js&logoColor=white)
 ![Zenn CLI](https://img.shields.io/badge/Zenn-CLI-3EA8FF?style=flat-square)
 ![Qiita CLI](https://img.shields.io/badge/Qiita-CLI-55C500?style=flat-square)
