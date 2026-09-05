@@ -1,4 +1,4 @@
-# Tech Articles Management
+<h1 align="center">Tech Articles Management</h1>
 
 <div align="center">
 
