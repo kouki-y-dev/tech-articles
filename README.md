@@ -1,13 +1,18 @@
 # Tech Articles Management
 
+<div align="center">
+
 [![Check Zenn Articles](https://github.com/kouki-y-dev/tech-articles/actions/workflows/check-zenn.yml/badge.svg)](https://github.com/kouki-y-dev/tech-articles/actions/workflows/check-zenn.yml)
 [![Check Qiita Articles](https://github.com/kouki-y-dev/tech-articles/actions/workflows/check-qiita.yml/badge.svg)](https://github.com/kouki-y-dev/tech-articles/actions/workflows/check-qiita.yml)
 [![Publish Articles](https://github.com/kouki-y-dev/tech-articles/actions/workflows/publish.yml/badge.svg)](https://github.com/kouki-y-dev/tech-articles/actions/workflows/publish.yml)
-![Node.js Version](https://img.shields.io/badge/Node.js-%3E%3D18.0.0-339933?style=flat-square&logo=node.js&logoColor=white)
+
+![Node.js Version](https://img.shields.io/badge/Node.js-%3E%3D22.0.0-339933?style=flat-square&logo=node.js&logoColor=white)
 ![Zenn CLI](https://img.shields.io/badge/Zenn-CLI-3EA8FF?style=flat-square)
 ![Qiita CLI](https://img.shields.io/badge/Qiita-CLI-55C500?style=flat-square)
 ![textlint](https://img.shields.io/badge/textlint-enabled-0052CC?style=flat-square)
 ![Agent Skills](https://img.shields.io/badge/Agent_Skills-2_Active-8A2BE2?style=flat-square&logo=openai&logoColor=white)
+
+</div>
 
 Zenn および Qiita の技術記事・書籍を Markdown 形式で一元管理するためのリポジトリです。  
 GitHub 連携による自動投稿・更新、CI/CD による自動バリデーション運用、および AI Agent Skills による執筆補助・自動校閲・相互フォーマット変換に対応しています。
@@ -47,7 +52,7 @@ GitHub 連携による自動投稿・更新、CI/CD による自動バリデー�
 ## Local Setup
 
 ### 前提条件
-- **Node.js**: v18.0.0 以上推奨
+- **Node.js**: v22.0.0 以上推奨
 - **npm**: Node.js に同梱
 
 ### インストール
