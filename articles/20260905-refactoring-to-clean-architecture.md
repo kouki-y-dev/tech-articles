@@ -100,6 +100,7 @@ https://github.com/kouki-y-dev/refactoring-to-clean-architecture
 
 先ほどの画像だと、DBやUI等の水色の部分が最も外側に来ていたと思います。
 各円は自分より内側の物しか見ないようにしつつ、そのシステム特有のロジックは中の方に入れましょう事があの画像の最も伝えたい事になります。
+こういったシステム特有のロジックやルールの事を**ビジネスロジック**と言います。
 
 つまるところ、プログラムに対して関心の分離を行い各ロジックを内側と外側で分けましょうという事です。
 
@@ -112,29 +113,21 @@ https://github.com/kouki-y-dev/refactoring-to-clean-architecture
 - データベースのバージョンが上がって処理を書き直す必要が出て来た
 - データベースに保存するのを廃止して別の物に保存するようにした
 
-こういった「外側の都合」が変わるたびに、一番大事なはずの「内側のビジネスルール（計算ロジックなど）」まで巻き添えで修正しなければならなくなります。
+こういった「外側の都合」が変わるたびに、一番大事なはずの「内側のビジネスルール（計算ロジックなど）」まで巻き添えで修正�```diff python
+# Before: グローバル辞書を関数から直接返し、内部のデータ構造（dict）が外に漏れる
+- products: dict[str, Product] = {...}
+- 
+- def get_all_products() -> dict[str, Product]:
+-     return products
 
-先ほどの飲食店で例えるなら、**「注文伝票を紙からタブレット端末に変えただけなのに、なぜかキッチンのシェフのレシピまで書き直さなければいけなくなった」** というくらいおかしな状態です。
-
-#### でも普通に書いたら「内から外」になるよね？
-
-そう思ったあなたは賢いです。
-
-普通にプログラムを書いた場合、「注文処理の中でデータベースに保存する処理を呼び出す」というコードになりがちです。
-これだとどうしても「内側から外側」に矢印が向いてしまいます。
-
-```javascript
-// 注文処理（内側：ビジネスルール）
-処理 注文を確定する(注文データ) {
-
-    // 内側のルール：在庫チェックや金額計算
-    もし 在庫が足りない なら エラーを返す
-    合計金額 = 計算する(注文データ)
-
-    // MySQLに依存してるのでデータを整える必要がある
-    MySQL用データ = 整形する(合計金額)
-
-    // 外側の都合：特定のデータベースに直接保存（★ここが外側への依存！）
+# After: Repository クラスでデータアクセスをカプセル化し、コレクション（list）として扱う
++ class ProductRepository:
++     def __init__(self, products: dict[str, Product] | None = None) -> None:
++         self._products: dict[str, Product] = products.copy() if products else {...}
++ 
++     def find_all(self) -> list[Product]:
++         return list(self._products.values())
+```への依存！）
     MySQLデータベースに接続する()
     MySQLにSQLを発行して保存する("INSERT INTO orders ...")
 }
@@ -164,7 +157,7 @@ https://github.com/kouki-y-dev/refactoring-to-clean-architecture
 | 注文確定 | 在庫チェック → 合計金額計算 → 注文作成 |
 | 注文履歴の参照 | 過去の注文を確認する |
 
-#### ビジネス上のルール
+#### ビジネス上のルール（ビジネスロジック）
 
 - 在庫が不足している場合、注文は確定できない
 - 合計金額には消費税（10%）が加算される
@@ -175,7 +168,12 @@ https://github.com/kouki-y-dev/refactoring-to-clean-architecture
 - 注文のやり取りはCLI上で完結させる
 - データベースは外部に用意せずメモリ上で構築する（簡単にするため）
 
-### [Step0. モノリシックコード](https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step0_monolith)
+## Phase 1: 基礎的な責務の分離（Step 0 〜 Step 2）
+
+ここからは具体的なコードを元に進めて行きます。
+詳しくはGitHubのリンクを見ながら読み進めて頂くと理解が捗ると思います。
+
+### [Step 0. モノリシックコード](https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step0_monolith)
 
 ではまず、一番最初の状態であるクリーンアーキテクチャはどころか関心の分離も何もされていない状態のコードを用意します。
 こういったコードを`モノリシックコード`と言います。
@@ -193,74 +191,232 @@ https://github.com/kouki-y-dev/refactoring-to-clean-architecture/blob/main/steps
 
 一見すると問題無いように見えますし成り立っていますが、このコードは以下のような問題を抱えています。
 
-1. 1か所の変更があらゆるところに影響する
-    - カートや注文のデータ構造（辞書のキー名など）を少し変えただけで、すべての関数を修正する必要があります。
-    - どこを直せばいいのか、どこに影響が出るのかがパッと見で把握できません。
+1. 責務の混在
+    - 1つの関数が「UI」「ビジネスルール」「データ永続化」の3役を同時に担っている
 2. コードの重複が多い
-    - 小計計算（price * quantity）、消費税計算（* TAX_RATE）、在庫チェックなどが、view_cart、place_order、add_to_cart など複数の関数に分散して書かれています。
-    - 税率の丸め方や在庫チェックの仕様が変わった場合、散らばったすべての箇所を探して修正しなければならず、修正漏れのリスクが高くなります。
-3. 各関数の責務が混ざり合っている
-    - 例えば place_order()（注文確定）の中では以下がすべて同居しています：
-        - 入力値やカートのバリデーション
-        - 在庫数チェック
-        - 小計・消費税・合計金額の計算
-        - 注文データの生成
-        - 在庫データの直接書き換え（減算）
-        - カートデータのクリア
-        - print() による標準出力
-    - 1つの関数が「ビジネスルール」「データ永続化」「ユーザーインターフェース」の3役を同時に担ってしまっています。
-4. テストが極めて書きにくい
-    - 何もかもがくっついてしまっているため、単体テストを書く事ができません
-    - 各テストの実行前後にグローバル状態をリセットしないと、テスト順序によって成否が変わってしまいます
-5. グローバル状態への依存と隠れた副作用
-    - どこからでもデータをやり取りするdictを書き換えれるので、どこから呼ばれるのかわかったものじゃありません
-6. 型の不在とタイポのリスク
-    - 全てがただのdict型で扱われているので、キー名をタイポしてしまった場合でもエラーを検知できません
-    - 型も厳密に見ている訳では無いので、在庫がマイナスになってしまう等の現象も許容してしまいます
-7. インフラや UI の差し替えができない
-    - 先ほどのクリーンアーキテクチャの説明の時にも出ましたが、このコードはCLIから呼び出される事前提になっています。
-    - もしもこれをFastAPIから呼び出す等の話になったら、コードを全て書き換える必要が出て起案す。
+    - ビジネスルールである消費税計算や在庫チェックが複数関数に書かれている
+    - もしもルールが変わった場合はこれら全てを直す必要がある
+3. 型の不在
+    - データが全て辞書型のため、タイポに気付けず不正な値（在庫のマイナスなど）を防げない
+4. グローバル状態と密結合
+    - ロジックが処理に結合してしまっているため、単体テストができない
+    - データやり取り用のdictがグローバルでアクセスできるため、どこからアクセスされるか追跡できない
+5. 差し替え不能
+    - CLIの print() やインメモリ操作が直書きされており、FastAPI等の別フレームワークやDBへの移行が不可能
 
 ざっと上げるとこんな感じです。
 確かに成り立ちはしますし動きはしますが、これでは今後改修するのがあまりにも大変です。
 
 **コードが動く事**と**コードが保守しやすい事**は別物です。
 
-ここからは段階を踏んでこのコードを保守しやすい形にしていきます。
+ここからは段階を踏んでこのクリーンアーキテクチャに導いていきます。
 
-### [Step1. 関心の分離](https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step1_separate_layers)
+https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step0_monolith
 
-では次いよいよリファクタリングを開始します。
-クリーンアーキテクチャを導入する前に、先ほどお話しした**関心の分離**をこのコードに適用します。
+---
 
-#### コード本体
+### [Step 1. 関心の分離（3層へのファイル分割）](https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step1_separate_layers)
 
-Step0 の頃は1つのファイルに全部載せてましたが、今回は4つのファイルに責務を分けています。
+クリーンアーキテクチャを導入する前に手始めとして、先ほど例でも出した**関心の分離**をこのコードに適用します。
+これをするだけでもかなり読みやすくなると思います。
 
-##### cli.py
+- **Step 0 の問題点**：
+  - 1つのファイルに UI、ビジネスロジック、データアクセスが混在し、変更の影響範囲が広すぎる。
+  - ロジックが全て1つにまとまっているのが原因でテストがとにかくしにくい
+  - ビジネスロジックとUI部分が結合しており、CLIから別のUIに差し替えたい場合に対応不可能
+- **リファクタリング内容**：
+  - 責務ごとに 3 つのファイルへ分割：
+    - `cli.py`：入出力（UI）のみを担当
+    - `service.py`：金額計算や注文の流れ（ビジネスロジック）を担当
+    - `data_access.py`：データ（商品・カート・注文）の保持を担当
+    - `main.py`：エントリーポイント
+- **得られた効果と残る課題**：
+  - **効果**
+    - UI を伴わない`service.py`を切り出した事により、ここだけ単体テストが可能になった。また、
+    - 責務を各ファイルに分けたことで、修正が必要な際はどのファイルを直せば良いか明確になった
+    - ビジネスロジックが`service.py`に独立したおかげで、UI部分を変えたとしてもビジネスロジックは影響を受けない形ができた
+  - **次の課題**
+    - `service.py` が `data_access.py` を直接参照しており、ビジネスロジックがデータアクセスの実装詳細に依存している。また、データが単なる`dict`のままである。
 
-ユーザーインターフェース を担当します。ユーザーからの入力 を受け取り、結果を画面に出力します。
+次のステップ以降では、ビジネスロジックがデータに直接依存しないようにしていきます。
 
-https://github.com/kouki-y-dev/refactoring-to-clean-architecture/blob/main/steps/step1_separate_layers/src/cli.py#L1-L169
+https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step1_separate_layers
 
-##### service.py
+---
 
-アプリケーションの「やりたいこと（ビジネスルール）」を担当します。
-在庫のチェックや合計金額の計算などを行います。
-https://github.com/kouki-y-dev/refactoring-to-clean-architecture/blob/main/steps/step1_separate_layers/src/service.py#L94-L244
+### [Step 2. ドメインモデルの導入](https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step2_domain_model)
+
+`ドメインモデル`を導入する事により、最も重要なビジネスロジックを内側に持ってくることができます。
+また、これまでdictでやり取りしていたデータ型を厳密な型で扱う事ができます。
 
 
-##### data_access.py
+```diff python
+# Before:生の dict と、外から直接書き換える手続き関数
+- products = {"P001": {"name": "Tシャツ", "price": 2000, "stock": 10}}
+- 
+- def update_product_stock(product_id: str, quantity: int) -> None:
+-     if product_id in products:
+-         products[product_id]["stock"] -= quantity
 
-データ（商品、カート、注文）の保存と取得を担当します。
+# After: 型定義と「在庫を減らすルール」を自身の中に閉じ込めたエンティティ
++ class Product(BaseModel):
++     id: str
++     name: str
++     price: int = Field(ge=0)
++     stock: int = Field(ge=0)
++ 
++     def decrease_stock(self, quantity: int) -> None:
++         if not self.has_enough_stock(quantity):
++             raise ValueError(f"エラー: {self.name} の在庫が不足しています")
++         self.stock -= quantity
+```
 
-https://github.com/kouki-y-dev/refactoring-to-clean-architecture/blob/main/steps/step1_separate_layers/src/data_access.py#L1-L166
+- **Step 1 の問題点**：
+  - データを単なる `dict` で受け渡しているため、キー名のタイポや不正な値の混入を防げず、より厳密にする必要がある
+  - ビジネスルール（在庫減少など）がサービス層に手続き的に散らばっている。
+- **リファクタリング内容**：
+  - Pydantic(データクラス)を用いてデータモデルクラス（`Product`, `CartItem`, `Cart`, `Order`等）を定義。
+  - データの整合性チェックや計算ロジックをエンティティ自身に持たせる事で、ロジックを1か所に集約
+- **得られた効果と残る課題**：
+  - **効果**
+    - Pydantic が型の保証をしてくれるため、タイポや不正な値が入る余地が無くなった
+    - ビジネスルールがここに集約されるため、今後変更が必要な場合はここだけを直せば良い
+    - ビジネスルールのみがここに抽出されたため、ここのみで単体テストが非常にしやすい状態になった
+  - **次の課題**
+    - `service.py`が未だデータの取得・保存処理に依存してしまっているため、データの保存先を変えたい場合に改修が困難
+    - データをどう保存するか・取得するか定義されていないため、`data_access.py`がインメモリの辞書データベースに縛られてる
+    - ドメインモデル部分は独立してテストしやすくなったが、service.py はまだテストが困難
 
-##### main.py
+データのやり取りがかなり厳密になりつつビジネスルールも1か所に集約されました。これに伴い、`service.py`の役割がドメインとデータアクセスの連携係になりました。
+ただ、この`service.py`がまだ具体的にどうドメインを操作するかを取り決めていないため、データアクセス部分にガッツリ依存してしまっている状態です。
+次はこの部分を解消したいと思います。
 
-アプリケーションのエントリーポイントです。
+https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step2_domain_model
 
-https://github.com/kouki-y-dev/refactoring-to-clean-architecture/blob/main/steps/step1_separate_layers/src/main.py#L1-L15
+---
+
+## Phase 2: 依存関係の逆転（Step 3 〜 Step 5）
+
+### [Step 3. Repository パターンの導入](https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step3_repository)
+
+Step3では`service.py`が直接データアクセス部分に依存しないようにしていきます。そのためにリポジトリを導入し、ここにデータアクセス部分を集約していきます。
+
+```diff:python
+- products: dict[str, Product] = {
+-     "P001": Product(id="P001", name="Tシャツ", price=2000, stock=10),
+-     "P002": Product(id="P002", name="マグカップ", price=1500, stock=5),
+-     "P003": Product(id="P003", name="ステッカー", price=500, stock=20),
+- }
+- 
+- def get_all_products() -> dict[str, Product]:
+-     return products
+
++ class ProductRepository:
++     def __init__(self, products: dict[str, Product] | None = None) -> None:
++         if products is None:
++             self._products: dict[str, Product] = {
++                 "P001": Product(
++                     id="P001", name="Tシャツ", price=2000, stock=10
++                 ),
++                 "P002": Product(
++                     id="P002", name="マグカップ", price=1500, stock=5
++                 ),
++                 "P003": Product(
++                     id="P003", name="ステッカー", price=500, stock=20
++                 ),
++             }
++         else:
++             self._products = products.copy()
++
++    def find_all(self) -> list[Product]:
++        return list(self._products.values())
+```
+
+- **Step 2 の問題点**：
+  - サービス層がデータの保存先やデータ構造の詳細（インメモリ辞書）を直接意識してしまっている。
+- **リファクタリング内容**：
+  - データ永続化をコレクションのように扱える `Repository` クラス（`ProductRepository`, `CartRepository`, `OrderRepository`）を導入。
+- **得られた効果と残る課題**：
+  - **効果**：データの保存・取得処理がカプセル化され、サービス層は「どう保存するか」を意識しなくてよくなった。
+  - **次の課題**：サービス層が巨大化しやすく、また依然としてリポジトリの具象クラスに直接依存している。
+
+https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step3_repository
+
+---
+
+### [Step 4. ユースケース層の導入](https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step4_usecase)
+
+- **Step 3 の問題点**：
+  - 1つのサービスに様々な操作（商品一覧、カート追加、注文など）が混在し、単一責任の原則（SRP）に反している。
+- **リファクタリング内容**：
+  - アプリケーションの利用シナリオごとに 1 つのクラス（`AddToCartUseCase`, `PlaceOrderUseCase` など）を分離。
+- **得られた効果と残る課題**：
+  - **効果**：各ユースケースが必要なリポジトリのみを受け取るようになり、見通しと保守性が向上。
+  - **次の課題**：ユースケースが具象リポジトリ（低水準モジュール）に直接依存しており、高水準が低水準に依存する状態のまま。
+
+https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step4_usecase
+
+---
+
+### [Step 5. 依存関係逆転の原則 (DIP)](https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step5_dependency_inversion)
+
+> [!IMPORTANT]
+> **ここが最大の山場！** 座学で触れた「依存の矢印を外から内にひっくり返す」をコードで実現します。
+
+- **Step 4 の問題点**：
+  - ユースケース（ビジネスルール）が `InMemoryProductRepository` などの具象実装へ依存しており、DB 変更やテスト用モックへの差し替え時に影響を受ける。
+- **リファクタリング内容**：
+  - ドメイン層に抽象インターフェース（`IProductRepository` 等）を定義。
+  - ユースケースは抽象インターフェースのみに依存させ、外側のリポジトリ層でそれを実装（Implements）する。
+- **得られた効果と残る課題**：
+  - **効果**：高水準モジュールが低水準モジュールに依存しなくなり、**依存の矢印が完全に逆転（内向き）**した。テスト時のモック差し替えも極めて容易に。
+  - **次の課題**：全体のディレクトリ構成やレイヤー境界を、クリーンアーキテクチャの同心円に合わせて体系的に整理したい。
+
+https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step5_dependency_inversion
+
+---
+
+## Phase 3: アーキテクチャの完成と「過剰設計」の罠（Step 6 〜 Step 7）
+
+### [Step 6. クリーンアーキテクチャの完成形](https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step6_clean_architecture)
+
+- **Step 5 の問題点**：
+  - 個別のテクニック（DIP、ユースケース等）は導入されたが、全体としてクリーンアーキテクチャの同心円モデルに沿ったディレクトリ構成やレイヤー設計に統合したい。
+- **リファクタリング内容**：
+  - `domain/`、`usecase/`、`presentation/`、`infrastructure/` の4つの同心円レイヤーに整理・統合。
+  - 外側から内側への単一方向の依存ルール（Dependency Rule）を徹底。
+- **得られた効果と残る課題**：
+  - **効果**：実務において最もバランスが良く、拡張性・テスト容易性に優れた「王道のクリーンアーキテクチャ」が完成。
+
+https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step6_clean_architecture
+
+---
+
+### [Step 7. 【発展】過剰な抽象化（Over-Engineering）](https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step7_over_engineering)
+
+> [!WARNING]
+> 原典のルールをすべて教条主義的（ドグマ的）に適用しすぎた場合の「やりすぎ」パターンです。
+
+- **あえて行ったこと（過剰な抽象化）**：
+  - Input/Output Port、Request/Response DTO、専用 ViewModel、永続化 Record と Data Mapper の徹底配置。
+- **何が問題になったか（過剰設計の弊害）**：
+  - 単純なデータを受け渡すだけで何重もの DTO 変換とインターフェースが必要になり、ボイラープレートコードが爆発。
+- **実務での教訓（落とし所）**：
+  - クリーンアーキテクチャの思想（関心の分離・依存逆転）は重要だが、規模やチーム開発のコストに応じた「引き算の設計（Step 6 程度にとどめる）」が不可欠。
+
+https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step7_over_engineering
+
+---
+
+## まとめ
+
+- **段階的リファクタリングで得られた学び**：
+  - 
+- **クリーンアーキテクチャを採用する判断基準**：
+  - 
+- **最後に**：
+  - 
+
 
 
 
