@@ -6,7 +6,7 @@ tags:
   - リファクタリング
   - 設計
 private: false
-updated_at: '2026-09-10T23:45:26+09:00'
+updated_at: '2026-09-10T23:56:28+09:00'
 id: 3251391cca933479336e
 organization_url_name: null
 slide: false
