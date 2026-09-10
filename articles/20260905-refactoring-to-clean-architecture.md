@@ -256,6 +256,8 @@ https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps
 `ドメインモデル`を導入する事により、最も重要なビジネスロジックを内側に持ってくることができます。
 また、これまでdictでやり取りしていたデータ型を厳密な型で扱う事ができます。
 
+これまではデータを単なる生の dict で扱っていたため、キー名のタイポに気付けず、在庫がマイナスになるような不正な状態も防げませんでした。
+ドメインモデルを導入し、「データ」と「それを操作するビジネスルール（在庫を減らす等）」をクラスの中にひとまとめに閉じ込めることで、常にデータが正しい状態を保てるようになります。
 
 ```diff python
 # Before:生の dict と、外から直接書き換える手続き関数
@@ -308,50 +310,67 @@ https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps
 
 Step3では`service.py`が直接データアクセス部分に依存しないようにしていきます。そのためにリポジトリを導入し、ここにデータアクセス部分を集約していきます。
 
-```diff:python
+これまでは `service.py` が「データがどのような辞書で管理されているか」という詳細を直接知ってしまっていました。
+リポジトリを挟むことで、データの保持形式や検索ロジックをリポジトリの中に閉じ込め、サービス側から「データの管理方法」という関心を切り離すことができます。
+
+```diff python
+# Before: モジュール直下の辞書と取得関数
 - products: dict[str, Product] = {
 -     "P001": Product(id="P001", name="Tシャツ", price=2000, stock=10),
--     "P002": Product(id="P002", name="マグカップ", price=1500, stock=5),
--     "P003": Product(id="P003", name="ステッカー", price=500, stock=20),
+-     # ...
 - }
 - 
 - def get_all_products() -> dict[str, Product]:
 -     return products
 
+# After: データの保持と取得をカプセル化したリポジトリクラス
 + class ProductRepository:
 +     def __init__(self, products: dict[str, Product] | None = None) -> None:
 +         if products is None:
-+             self._products: dict[str, Product] = {
-+                 "P001": Product(
-+                     id="P001", name="Tシャツ", price=2000, stock=10
-+                 ),
-+                 "P002": Product(
-+                     id="P002", name="マグカップ", price=1500, stock=5
-+                 ),
-+                 "P003": Product(
-+                     id="P003", name="ステッカー", price=500, stock=20
-+                 ),
++             self._products = {
++                 "P001": Product(id="P001", name="Tシャツ", price=2000, stock=10),
++                 # ...
 +             }
 +         else:
 +             self._products = products.copy()
-+
-+    def find_all(self) -> list[Product]:
-+        return list(self._products.values())
++ 
++     def find_all(self) -> list[Product]:
++         return list(self._products.values())
 ```
 
 - **Step 2 の問題点**：
-  - サービス層がデータの保存先やデータ構造の詳細（インメモリ辞書）を直接意識してしまっている。
+  - サービス層がデータの保存先やデータ構造の詳細を直接意識してしまっていて、依存している。
 - **リファクタリング内容**：
-  - データ永続化をコレクションのように扱える `Repository` クラス（`ProductRepository`, `CartRepository`, `OrderRepository`）を導入。
+  - データ永続化の詳細を隠し、メモリ上のリストのように直感的にデータを出し入れできる `Repository` クラス（`ProductRepository`, `CartRepository`, `OrderRepository`）を導入。
+    - 「データを全て取得する」というロジックの詳細を知ること、なくただ`find_all()`だけで呼び出すことができる
+    - もしもこの「データを全て取得する」のやり方を変えたい場合は `find_all()`を直すだけで良い
 - **得られた効果と残る課題**：
-  - **効果**：データの保存・取得処理がカプセル化され、サービス層は「どう保存するか」を意識しなくてよくなった。
-  - **次の課題**：サービス層が巨大化しやすく、また依然としてリポジトリの具象クラスに直接依存している。
+  - **効果**
+    - もしデータの持ち方が変わっても、修正するのはリポジトリの中身だけでよく、サービス側を直す必要がない。
+    - リポジトリの初期化時にテスト用データを渡せるようになり、テストごとに自由なデータを扱えるようになった。
+  - **次の課題**
+    - 商品一覧、カート操作、注文処理などのロジックがすべて `service.py` 1つに集まっており、コードが肥大化しやすい
+    - `service.py` が「インメモリ用のリポジトリクラス」を直接 `import` して使っているため、本物のDBやモックに差し替えにくい状態のまま
+
+リポジトリを導入する事で、サービス部分は具体的なデータの操作ロジックを知る必要は無く、ただリポジトリを操作するだけでデータの操作をする事ができるようになりました。
+これによって、データの操作とそれを呼び出す側で関心の分離が実現できました。
+
+ただ、まだ課題は残っています。
+現状ですと、`service.py` にあらゆるロジックが集約されているので、今後機能追加する度にここが肥大化します。Step4ではこれを解消します。
+また、依然として`service.py` が直接リポジトリをimportしてしまっていて、DB接続やテスト用のモックに差し替えにくい状態です。Step5でこれを解消します。
 
 https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step3_repository
 
 ---
 
 ### [Step 4. ユースケース層の導入](https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step4_usecase)
+
+Step3ではリポジトリパターンを導入する事で、データアクセス部分の関心の分離を実現しました。しかし、`service.py` にあらゆるビジネスロジックが集約されており、肥大化しやすい状態です。また、直接リポジトリを参照しているためテストもしにくい状態です。
+そこで、「ユースケース層」を導入し、これらの問題を解消していきます。
+
+ユースケースとは、その名の通り「ユーザーがシステムを使ってやりたいこと」を1つのクラスとして表現したものです。
+例えば、「商品を一覧表示する」「カートに商品を追加する」「注文を確定する」といった単位でクラスを分割します。
+ユースケース自身は細かい計算ルールを持たず、「リポジトリからデータを取得し、ドメインモデルに計算させ、結果をリポジトリに保存する」という一連の流れを指揮する役割を担います。
 
 - **Step 3 の問題点**：
   - 1つのサービスに様々な操作（商品一覧、カート追加、注文など）が混在し、単一責任の原則（SRP）に反している。
