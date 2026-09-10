@@ -372,13 +372,40 @@ Step3ではリポジトリパターンを導入する事で、データアクセ
 例えば、「商品を一覧表示する」「カートに商品を追加する」「注文を確定する」といった単位でクラスを分割します。
 ユースケース自身は細かい計算ルールを持たず、「リポジトリからデータを取得し、ドメインモデルに計算させ、結果をリポジトリに保存する」という一連の流れを指揮する役割を担います。
 
+```diff python
+# Before: あらゆる操作が1つのクラスに混在した「巨大なサービス」
+- class ShopService:
+-     def get_products_list(self) -> list[Product]:
+-         return self.product_repo.find_all()
+-     # ... カート追加や注文処理などもすべて同居
+
+# After: 「商品一覧の取得」という1つの目的に特化したユースケース
++ class ListProductsUseCase:
++     def __init__(self, product_repo: ProductRepository) -> None:
++         self.product_repo = product_repo
++ 
++     def execute(self) -> list[Product]:
++         return self.product_repo.find_all()
+```
+
+
 - **Step 3 の問題点**：
-  - 1つのサービスに様々な操作（商品一覧、カート追加、注文など）が混在し、単一責任の原則（SRP）に反している。
+  - `service.py` が商品一覧、カート追加、注文確定などあらゆる機能を引き受ける「何でも屋」になっていた。
+  - カート機能を直したいだけなのに、注文処理と同じファイルを編集することになり、思わぬバグやコード衝突の温床になっていた。
 - **リファクタリング内容**：
-  - アプリケーションの利用シナリオごとに 1 つのクラス（`AddToCartUseCase`, `PlaceOrderUseCase` など）を分離。
+    - アプリケーションの利用シーンごとに 1 つのクラス（`ListProductsUseCase`, `AddToCartUseCase`, `PlaceOrderUseCase` 等）へ完全に分離。
+  - それぞれのユースケースが、自分に必要なリポジトリだけを受け取る形に変更。
 - **得られた効果と残る課題**：
-  - **効果**：各ユースケースが必要なリポジトリのみを受け取るようになり、見通しと保守性が向上。
-  - **次の課題**：ユースケースが具象リポジトリ（低水準モジュール）に直接依存しており、高水準が低水準に依存する状態のまま。
+  - **効果**
+    - 「カート追加を直すときは `AddToCartUseCase` だけを触ればいい」状態になり、他の機能に影響を与えるリスクがなくなった。
+    - そのユースケースが必要とする最小限のリポジトリだけを用意すれば単体テストが書けるようになった。
+  - **次の課題**
+    - ユースケースが `ProductRepository`を直接型注釈やコード内で指定してしまっている。
+    - 本来一番重要なユースケースが、データアクセスの都合に縛られており、本番用DBやテスト用モックへ差し替える仕組みがまだない
+
+ユースケース層を導入しユースケースごとにクラスを分ける事で、改修する際の影響範囲が非常に明確になったと思います。また、各ユースケースが必要最低限のリポジトリを参照する事で、各クラスの依存度も必要最小限になっています。
+まだ残っている課題として、ユースケース層が特定のリポジトリ実装を直接参照してしまっているため、将来データベースを変更したり、テスト用のモックに差し替えたりすることが難しい状態です。これが座学でも説明した「内から外に依存している状態」です。
+次のStep5ではインタフェースを導入していよいよ**依存関係逆転の原則**を適用し、この依存関係をひっくり返していきます。
 
 https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step4_usecase
 
@@ -386,8 +413,10 @@ https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps
 
 ### [Step 5. 依存関係逆転の原則 (DIP)](https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step5_dependency_inversion)
 
-> [!IMPORTANT]
-> **ここが最大の山場！** 座学で触れた「依存の矢印を外から内にひっくり返す」をコードで実現します。
+:::message alert
+**ここが最大の山場！**  
+座学で触れた「依存の矢印を外から内にひっくり返す」をコードで実現します。
+:::
 
 - **Step 4 の問題点**：
   - ユースケース（ビジネスルール）が `InMemoryProductRepository` などの具象実装へ依存しており、DB 変更やテスト用モックへの差し替え時に影響を受ける。
