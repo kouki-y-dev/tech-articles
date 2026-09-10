@@ -411,7 +411,7 @@ https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps
 
 ---
 
-### [Step 5. 依存関係逆転の原則 (DIP)](https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step5_dependency_inversion)
+### [Step 5. 依存関係逆転の原則](https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step5_dependency_inversion)
 
 :::message alert
 **ここが最大の山場！**  
@@ -501,22 +501,70 @@ https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps
 
 ### [Step 6. クリーンアーキテクチャの完成形](https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step6_clean_architecture)
 
-- **Step 5 の問題点**：
-  - 個別のテクニック（DIP、ユースケース等）は導入されたが、全体としてクリーンアーキテクチャの同心円モデルに沿ったディレクトリ構成やレイヤー設計に統合したい。
-- **リファクタリング内容**：
-  - `domain/`、`usecase/`、`presentation/`、`infrastructure/` の4つの同心円レイヤーに整理・統合。
-  - 外側から内側への単一方向の依存ルール（Dependency Rule）を徹底。
-- **得られた効果と残る課題**：
-  - **効果**：実務において最もバランスが良く、拡張性・テスト容易性に優れた「王道のクリーンアーキテクチャ」が完成。
+Step 5 までで、クリーンアーキテクチャに必要な要素は一通り出揃いました。
+この Step 6 ではこれまで作ってきた要素を総ざらいし、クリーンアーキテクチャの同心円モデル（先ほどの図）に沿ってディレクトリ構成を体系的に整理します。
+
+```
+├── src/
+│   ├── domain/                                # 【最内層】Enterprise Business Rules (Entities)
+│   │   ├── __init__.py
+│   │   ├── entity.py                          # ドメインエンティティ・値オブジェクト (Product, Cart, Order 等)
+│   │   └── repository.py                      # リポジトリ抽象インターフェース (IProductRepository 等)
+│   ├── usecase/                               # 【内層】Application Business Rules (Use Cases)
+│   │   ├── __init__.py
+│   │   ├── add_to_cart.py                     # カート追加ユースケース
+│   │   ├── get_order_history.py               # 注文履歴取得ユースケース
+│   │   ├── list_products.py                   # 商品一覧取得ユースケース
+│   │   ├── place_order.py                     # 注文確定ユースケース
+│   │   ├── remove_from_cart.py                # カート削除ユースケース
+│   │   └── view_cart.py                       # カート表示ユースケース
+│   ├── presentation/                          # 【外層】Interface Adapters (Presentation / Controllers)
+│   │   ├── __init__.py
+│   │   └── cli.py                             # CLI ユーザーインターフェース (UI アダプタ)
+│   ├── infrastructure/                        # 【最外層】Frameworks & Drivers / Gateways
+│   │   ├── __init__.py
+│   │   └── repository/                        # リポジトリ具象実装 (インメモリ / DB / 外部API等)
+│   │       ├── __init__.py
+│   │       ├── cart_repository.py             # InMemoryCartRepository
+│   │       ├── order_repository.py            # InMemoryOrderRepository
+│   │       └── product_repository.py          # InMemoryProductRepository
+│   └── main.py                                # Composition Root (最外層・DI とブートストラップ)
+└── tests/
+    ├── conftest.py                            # pytest フィクスチャ (DI コンテナ相当)
+    ├── test_domain.py                         # ドメイン層の単体テスト
+    ├── test_infrastructure.py                 # インフラ層 (具象リポジトリ) の単体テスト
+    ├── test_presentation.py                   # プレゼンテーション層 (CLI) の単体テスト
+    └── test_usecase.py                        # ユースケース層の単体テスト
+```
+
+#### 整理された4つのレイヤー
+- **最内層：`domain/`（Entities）**
+  - 純粋なビジネスルール（`Product` や `Order`）と、リポジトリの抽象インターフェース。外部のライブラリやDB、UIの都合には一切依存しません。
+- **内層：`usecase/`（Use Cases）**
+  - アプリケーション固有の業務フロー（「注文する」「一覧を見る」など）。ドメインモデルやリポジトリを使って処理の手順を組み立てます。
+- **外層：`presentation/`（Interface Adapters）**
+  - ユーザーとの接点（今回はCLI）。ユーザー入力を受け取り、ユースケースを呼び出します。
+- **最外層：`infrastructure/`（Frameworks & Drivers）**
+  - 具体的な技術（今回はインメモリ辞書のリポジトリ実装）。ドメイン層のインターフェースを満たす形で実装されます。
+#### 完成形によって得られたメリット
+- **依存の向きが完全に外側から内側へ**
+  - 外側（CLIやインフラ）は内側（ユースケースやドメイン）に依存していますが、内側は外側の詳細を一切知りません。
+- **高いテスト容易性と差し替え性**
+  - 単体テスト（`tests/`）も各層ごとに綺麗に分離され、ビジネスロジックを安全かつ迅速にテスト・改修できる基盤が完成しました。
+実務においては、この **Step 6 の状態がもっともバランスが良く、保守しやすい「王道のクリーンアーキテクチャ」** と言えます。
+
+これでクリーンアーキテクチャへのリファクタリングが完成しました！……がもう少し続きます。
+このクリーンアーキテクチャの罠なのですが、**抽象化をやりすぎてしまい逆にコードが保守しにくい状態になってしまう事**があります。次の Step 7 では、あえてその「やりすぎパターン」を見てみましょう。
 
 https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step6_clean_architecture
 
 ---
 
-### [Step 7. 【発展】過剰な抽象化（Over-Engineering）](https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step7_over_engineering)
+### [Step 7. 【発展】過剰な抽象化](https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step7_over_engineering)
 
-> [!WARNING]
-> 原典のルールをすべて教条主義的（ドグマ的）に適用しすぎた場合の「やりすぎ」パターンです。
+:::message alert 
+原典のルールを適用しすぎた場合の「やりすぎ」パターンです。
+:::
 
 - **あえて行ったこと（過剰な抽象化）**：
   - Input/Output Port、Request/Response DTO、専用 ViewModel、永続化 Record と Data Mapper の徹底配置。
