@@ -3,15 +3,16 @@ title: 【Pythonで実践】密結合コードから段階的リファクタリ�
 tags:
   - Python
   - CleanArchitecture
-  - クリーンアーキテクチャ
   - リファクタリング
   - 設計
 private: false
-updated_at: null
-id: null
+updated_at: '2026-09-10T23:45:26+09:00'
+id: 3251391cca933479336e
 organization_url_name: null
 slide: false
 ignorePublish: false
+posting_campaign_uuid: null
+agreed_posting_campaign_term: false
 ---
 
 :::note info
