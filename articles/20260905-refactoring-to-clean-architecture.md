@@ -1,8 +1,8 @@
 ---
-title: "リファクタリングをクリーンアーキテクチャへ導く"
-emoji: "📑"
+title: "段階的リファクタリングで理解するクリーンアーキテクチャ ～過剰設計の罠まで～"
+emoji: "🧅"
 type: "tech" # tech: 技術記事 / idea: アイデア
-topics: ["初心者", "クリーンアーキテクチャ", "アーキテクチャ", "cleanarchitecture"]
+topics: ["python", "cleanarchitecture", "architecture", "refactoring", "設計"]
 published: true
 ---
 
