@@ -38,7 +38,7 @@ https://github.com/kouki-y-dev/refactoring-to-clean-architecture
 
 イメージを一旦掴んでもらうため、**飲食店**を例に簡単な具体例を出します。
 
-飲食店と言えば普通は**ホール担当やキッチン担当、仕入れ担当や経営者**と色々な人間が居て**店が回ります。
+飲食店と言えば普通は**ホール担当やキッチン担当、仕入れ担当や経営者**と色々な人間が居て店が回ります。
 各担当者は**お互いの担当範囲は把握しています**が、**各々の細かい作業内容までは把握していません**。
 
 キッチン担当はホールの作業に口出ししませんし、ホール担当は調理工程を把握していたりはしません。
@@ -566,12 +566,223 @@ https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps
 原典のルールを適用しすぎた場合の「やりすぎ」パターンです。
 :::
 
-- **あえて行ったこと（過剰な抽象化）**：
-  - Input/Output Port、Request/Response DTO、専用 ViewModel、永続化 Record と Data Mapper の徹底配置。
-- **何が問題になったか（過剰設計の弊害）**：
-  - 単純なデータを受け渡すだけで何重もの DTO 変換とインターフェースが必要になり、ボイラープレートコードが爆発。
-- **実務での教訓（落とし所）**：
-  - クリーンアーキテクチャの思想（関心の分離・依存逆転）は重要だが、規模やチーム開発のコストに応じた「引き算の設計（Step 6 程度にとどめる）」が不可欠。
+前回まででクリーンアーキテクチャは完成しましたので、ここからは「**実験のおまけ編**」です。
+
+クリーンアーキテクチャの原典では、あの有名な同心円の図に加えて、**「境界を越えるときは必ず専用のインターフェース（Port）やデータ変換用クラス（DTO/Presenter）を挟む」**という非常に厳格なルールが書かれています。
+
+この Step 7 では、その原典の教えを「**あえて1ミリも妥協せずに100%忠実に実装**」してみました。
+その結果、コードがどうなってしまったのかを見てみましょう。
+
+まず、ディレクトリ構成から見て見ます。
+```
+├── src/
+│   ├── domain/                                # 【最内層】Enterprise Business Rules
+│   │   ├── __init__.py
+│   │   ├── entity.py                          # 純粋なドメインエンティティ・値オブジェクト
+│   │   └── gateway.py                         # ドメインゲートウェイインターフェース (IProductGateway 等)
+│   ├── usecase/                               # 【内層】Application Business Rules
+│   │   ├── __init__.py
+│   │   ├── port/                              # 境界インターフェース & DTO 群
+│   │   │   ├── __init__.py
+│   │   │   ├── add_to_cart_port.py            # InputPort, OutputPort, RequestDTO, ResponseDTO
+│   │   │   ├── get_order_history_port.py
+│   │   │   ├── list_products_port.py
+│   │   │   ├── place_order_port.py
+│   │   │   ├── remove_from_cart_port.py
+│   │   │   └── view_cart_port.py
+│   │   └── interactor/                        # ユースケース具象実装 (Interactor)
+│   │       ├── __init__.py
+│   │       ├── add_to_cart_interactor.py
+│   │       ├── get_order_history_interactor.py
+│   │       ├── list_products_interactor.py
+│   │       ├── place_order_interactor.py
+│   │       ├── remove_from_cart_interactor.py
+│   │       └── view_cart_interactor.py
+│   ├── presentation/                          # 【外層】Interface Adapters (Controllers & Presenters)
+│   │   ├── __init__.py
+│   │   ├── controller/                        # コントローラー (入力を RequestDTO に変換し InputPort を呼ぶ)
+│   │   │   ├── __init__.py
+│   │   │   └── order_controller.py
+│   │   ├── presenter/                         # プレゼンター (OutputPort を実装し ViewModel を構築)
+│   │   │   ├── __init__.py
+│   │   │   ├── add_to_cart_presenter.py
+│   │   │   ├── get_order_history_presenter.py
+│   │   │   ├── list_products_presenter.py
+│   │   │   ├── place_order_presenter.py
+│   │   │   ├── remove_from_cart_presenter.py
+│   │   │   └── view_cart_presenter.py
+│   │   ├── view_model/                        # UI 表示専用データ構造 (ViewModel)
+│   │   │   ├── __init__.py
+│   │   │   └── models.py
+│   │   └── cli/                               # UI / View 実装 (画面入出力)
+│   │       ├── __init__.py
+│   │       └── cli.py
+│   ├── infrastructure/                        # 【最外層】Frameworks & Drivers / Gateways
+│   │   ├── __init__.py
+│   │   ├── persistence/                       # ストレージ専用データモデル (Persistence Record)
+│   │   │   ├── __init__.py
+│   │   │   └── models.py
+│   │   ├── mapper/                            # Entity ↔ Record の双方向 Data Mapper
+│   │   │   ├── __init__.py
+│   │   │   └── data_mapper.py
+│   │   └── gateway/                           # 具象ゲートウェイ実装 (InMemoryProductGateway 等)
+│   │       ├── __init__.py
+│   │       ├── cart_gateway.py
+│   │       ├── order_gateway.py
+│   │       └── product_gateway.py
+│   └── main.py                                # Composition Root (全レイヤーの DI と起動)
+└── tests/
+    ├── conftest.py                            # DI コンテナフィクスチャ
+    ├── test_domain.py                         # ドメイン層の単体テスト
+    ├── test_infrastructure.py                 # インフラ層 (Mapper / Gateway) の単体テスト
+    ├── test_presentation.py                   # プレゼンテーション層 (Controller / Presenter / CLI) のテスト
+    └── test_usecase.py                        # ユースケース層 (Interactor / Port / DTO) のテスト
+```
+はい、この時点でかなりカオスですね。ファイル数がStep6から膨大に増えています。もう見るだけでは何がどれを担当するのか判断できません。
+
+では次にソースコードの具体例として、`ListProductsUseCase`を見て見ましょう。
+
+まず、Step6時点の実装はこちらです。インターフェースを経由してリポジトリを受け取り、その中身を返すだけで非常にシンプルです。
+```python
+class ListProductsUseCase:
+    def __init__(self, product_repo: IProductRepository) -> None:
+        self.product_repo = product_repo
+
+    def execute(self) -> list[Product]:
+        return self.product_repo.find_all()
+```
+
+これが Step 7 になると……なんと**商品一覧を取得して表示するだけで、これだけのクラスとコードが必要になります。**
+
+```python
+# -------------------------------------------------------------
+# 1. ユースケースの入出力データ（DTO: Data Transfer Object）
+# -------------------------------------------------------------
+class ListProductsRequestDTO(BaseModel):
+    model_config = ConfigDict(frozen=True)  # パラメータなし
+
+
+class ProductItemDTO(BaseModel):
+    product_id: str
+    name: str
+    price: int = Field(ge=0)
+    stock: int = Field(ge=0)
+    model_config = ConfigDict(frozen=True)
+
+
+class ListProductsResponseDTO(BaseModel):
+    products: list[ProductItemDTO]
+    model_config = ConfigDict(frozen=True)
+
+
+# -------------------------------------------------------------
+# 2. 境界インターフェース（Input Port / Output Port）
+# -------------------------------------------------------------
+class ListProductsInputPort(ABC):
+    @abstractmethod
+    def execute(self, request: ListProductsRequestDTO) -> None:
+        pass
+
+
+class ListProductsOutputPort(ABC):
+    @abstractmethod
+    def present_success(self, response: ListProductsResponseDTO) -> None:
+        pass
+
+    @abstractmethod
+    def present_error(self, error_message: str) -> None:
+        pass
+
+
+# -------------------------------------------------------------
+# 3. ユースケース実装（Interactor）: データを DTO に詰め替えて OutputPort へ通知
+# -------------------------------------------------------------
+class ListProductsInteractor(ListProductsInputPort):
+    def __init__(
+        self,
+        product_gateway: IProductGateway,
+        output_port: ListProductsOutputPort,
+    ) -> None:
+        self.product_gateway = product_gateway
+        self.output_port = output_port
+
+    def execute(self, request: ListProductsRequestDTO) -> None:
+        products = self.product_gateway.find_all()
+
+        # 【詰め替え①】Entity -> DTO への変換
+        items = [
+            ProductItemDTO(
+                product_id=p.id,
+                name=p.name,
+                price=p.price,
+                stock=p.stock,
+            )
+            for p in products
+        ]
+        response = ListProductsResponseDTO(products=items)
+        self.output_port.present_success(response)
+
+
+# -------------------------------------------------------------
+# 4. 出力アダプタ（Presenter）: DTO を画面用の ViewModel に詰め替える
+# -------------------------------------------------------------
+class ListProductsPresenter(ListProductsOutputPort):
+    def __init__(self) -> None:
+        self.view_model = ListProductsViewModel()
+
+    def present_success(self, response: ListProductsResponseDTO) -> None:
+        # 【詰め替え②】DTO -> ViewModel（画面用表示モデル）への変換
+        items = [
+            ProductItemViewModel(
+                product_id=p.product_id,
+                name=p.name,
+                price_display=f"¥{p.price}",
+                stock_display=str(p.stock),
+            )
+            for p in response.products
+        ]
+        self.view_model = ListProductsViewModel(
+            is_success=True, products=items
+        )
+
+    def present_error(self, error_message: str) -> None:
+        self.view_model = ListProductsViewModel(
+            is_success=False, error_message=error_message
+        )
+
+
+# -------------------------------------------------------------
+# 5. 画面表示用モデル（ViewModel）
+# -------------------------------------------------------------
+@dataclass
+class ProductItemViewModel:
+    product_id: str
+    name: str
+    price_display: str  # 例: "¥2,000"
+    stock_display: str  # 例: "10"
+
+
+@dataclass
+class ListProductsViewModel:
+    is_success: bool = True
+    error_message: str = ""
+    products: list[ProductItemViewModel] = field(default_factory=list)
+```
+
+読むだけでヤバいという事が伝わりますが、やっている事としてはまさに「**データのバケツリレー**」です。
+1. **DTO**: ユースケースの実行・受け渡しに必要な専用データクラスを定義
+2. **Input Port / Output Port**: ユースケースの入力口と出力先を縛るインターフェースを定義
+3. **Interactor**: Port に従い、リポジトリから取ってきたドメインモデルを **DTO に詰め替えて** 出力 Port を呼ぶ
+4. **Presenter**: 受け取った DTO を、画面表示用の **ViewModel にさらに詰め替える**
+つまり、
+- 「リポジトリ ⇔ ユースケース」の間は **ドメインモデル**
+- 「ユースケース ⇔ プレゼンター」の間は **DTO**
+- 「プレゼンター ⇔ 画面（UI）」の間は **ViewModel**
+と、**レイヤーの境界を超えるたびに毎回専用の型へ詰め替えを行っている**わけです。  
+これこそが、クリーンアーキテクチャの原典が求めた「境界を超えるときは必ずインターフェースと専用モデル（DTO）を用意する」というルールの実態です。
+
+これを行ってしまうと、バケツリレーのコードばかりが肥大化してしまい、**本来最も重要なビジネスロジックが埋もれてしまいます。**
+もちろんシステムの規模感にもよりますが、これが実務において「Step 6 くらいが最もバランスが良くちょうどいい」と言われる所以です。
 
 https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step7_over_engineering
 
@@ -579,13 +790,13 @@ https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps
 
 ## まとめ
 
-- **段階的リファクタリングで得られた学び**：
-  - 
-- **クリーンアーキテクチャを採用する判断基準**：
-  - 
-- **最後に**：
-  - 
+今回はモノリシックなコードから段階的にクリーンアーキテクチャを導入する事で各層の役割を改めて理解しつつ、最終的にはやり過ぎてしまった場合どうなるのかを自分の中に落とし込むためにリポジトリを構築しこの記事を作成しました。
 
+確かにクリーンアーキテクチャを導入する事でコードの可読性や保守性は上がりますが、規模感によって導入するかは要検討だなと自分は考えています。
+小さい物であればStep 1 の関心の分離で事足りる事もありますし、中規模であれば Step 6までの導入を考えますし、大きい物であればもっとその先を考えるべきか…。
+脳死でとりあえずクリーンアーキテクチャを導入するのではなく、規模感に応じてどこまで導入するかの判断基準を自分で持っておくことが大事だなと感じました。
 
+実際の所、筆者はStep 1かStep 6をよく使い分けているのですが、もしも今後大きいプロジェクトを作る場合はその先の抽象化も検討すべきだなと感じました。
 
+この記事やリポジトリが誰かの参考になれば幸いです！ぜひ手元で差分を見比べてみてください。最後まで読んでいただきありがとうございました！
 
