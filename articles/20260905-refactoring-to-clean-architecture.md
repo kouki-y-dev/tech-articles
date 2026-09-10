@@ -418,14 +418,80 @@ https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps
 座学で触れた「依存の矢印を外から内にひっくり返す」をコードで実現します。
 :::
 
+Step 4 ではユースケースを導入し、機能を1クラスずつに整理しました。しかし、ユースケースが「インメモリ用のリポジトリ」を直接 import してしまっているため、まだデータアクセスの詳細に縛られています。
+そこで、クリーンアーキテクチャの根幹をなす**依存関係逆転の原則**を適用します。
+
+これまでは「**ユースケースがリポジトリの実装に合わせていた**」のに対し、今回は「**ユースケースが『こういう操作ができるリポジトリが欲しい』というインターフェースを定義し、外側のリポジトリがそのルールに従って実装する**」という形に変えます。
+
+まずは、ドメイン層にインターフェースを定義し、リポジトリ層でそれを実装します。
+
+```python
+# 1. ドメイン層：注文リポジトリが満たすべき仕様（インターフェース）を定義
+class IOrderRepository(ABC):
+    @abstractmethod
+    def save(self, order: Order) -> None:
+        pass
+
+    @abstractmethod
+    def find_by_user_id(self, user_id: str) -> list[Order]:
+        pass
+    # ... 他のメソッド（find_all, count など）
+
+
+# 2. リポジトリ層：インターフェースを実装した具象クラス
+class InMemoryOrderRepository(IOrderRepository):
+    def __init__(self, orders: dict[str, Order] | None = None) -> None:
+        self._orders: dict[str, Order] = orders if orders is not None else {}
+
+    def save(self, order: Order) -> None:
+        self._orders[order.order_id] = order
+
+    def find_by_user_id(self, user_id: str) -> list[Order]:
+        return [
+            order
+            for order in self._orders.values()
+            if order.user_id == user_id
+        ]
+    # ... 他のメソッド
+```
+
+このインターフェースをユースケースに適用すると、ユースケースの書き方は以下のように変化します。
+
+```diff python
+# Before: 具体的なリポジトリ実装（OrderRepository）を直接受け取っていた
+- class GetOrderHistoryUseCase:
+-     def __init__(self, order_repo: OrderRepository) -> None:
+-         self.order_repo = order_repo
+- 
+-     def execute(self, user_id: str) -> list[Order]:
+-         return self.order_repo.find_by_user_id(user_id)
+
+# After: ドメイン層のインターフェース（IOrderRepository）を受け取るように変更
++ class GetOrderHistoryUseCase:
++     def __init__(self, order_repo: IOrderRepository) -> None:
++         self.order_repo = order_repo
++ 
++     def execute(self, user_id: str) -> list[Order]:
++         return self.order_repo.find_by_user_id(user_id)
+```
+
+こうする事で、ユースケースは具体的な注文の処理を知るのではなく、あくまで「注文する物を受け取ってそれを実行する」という形になります。
+
 - **Step 4 の問題点**：
-  - ユースケース（ビジネスルール）が `InMemoryProductRepository` などの具象実装へ依存しており、DB 変更やテスト用モックへの差し替え時に影響を受ける。
+  - ユースケースが `OrderRepository`を直接 `import` してしまっていた。
+  - そのため、「将来 MySQL などの本番DBに切り替えたい」「テスト用に偽物のリポジトリを使いたい」と思っても、ユースケース側のコードを書き換えないと差し替えられない状態だった。
+  - 本来一番守るべき「業務の手順」が、データアクセスの都合に引きずられていた。
 - **リファクタリング内容**：
-  - ドメイン層に抽象インターフェース（`IProductRepository` 等）を定義。
-  - ユースケースは抽象インターフェースのみに依存させ、外側のリポジトリ層でそれを実装（Implements）する。
-- **得られた効果と残る課題**：
-  - **効果**：高水準モジュールが低水準モジュールに依存しなくなり、**依存の矢印が完全に逆転（内向き）**した。テスト時のモック差し替えも極めて容易に。
-  - **次の課題**：全体のディレクトリ構成やレイヤー境界を、クリーンアーキテクチャの同心円に合わせて体系的に整理したい。
+  - ドメイン層に「こういう操作ができるリポジトリであってほしい」という規約（抽象インターフェース：`IOrderRepository`）を定義。
+  - ユースケースはインターフェースだけに依存させ、特定の実装を見ないようにした。
+  - リポジトリではそのインターフェースを継承し実装を行い、具体的なデータ保存処理を作った。
+- **次の課題**：
+    - テクニックは揃ったが、全体のフォルダ構成やレイヤー境界が、クリーンアーキテクチャの「4つの同心円」として体系的に整理されていない
+
+インターフェースを導入することにより、元々ユースケースがインメモリリポジトリに直接依存していたところを、「こういう操作をしたい」という抽象的なインターフェースに依存する形へと切り替えることができました。
+そして、リポジトリ側がそのインターフェースに合わせて実装を行うことで、依存の向きが完全に逆転しました。これこそが、クリーンアーキテクチャの代名詞ともいえる「**依存関係逆転の原則**」です。
+
+ここまでのリファクタリングでクリーンアーキテクチャの要素は一通り揃いましたが、ディレクトリ構造が一般的な構成とはまだ異なる状態です。次の Step 6 では、全体のフォルダ構成を同心円モデルに合わせて綺麗に整えていきます。
 
 https://github.com/kouki-y-dev/refactoring-to-clean-architecture/tree/main/steps/step5_dependency_inversion
 
