@@ -33,14 +33,17 @@ agreed_posting_campaign_term: false
 という事で今回は技術記事をGit管理する事についてお話ししたいと思います。ネタとしては何番煎じだという感じだと思うのですがお付き合いください。
 
 先日ですが、QiitaとZennの記事をGit上で一元管理する事を目的としてこちらのリポジトリを構築しました。
+
 https://github.com/kouki-y-dev/tech-articles
 
 解説記事も以下にまとめています。
 
 **Zenn版**
+
 https://zenn.dev/yymm/articles/20260821-qiita-zenn-writing-setup
 
 **Qiita版**
+
 https://qiita.com/kouki_y/items/3c75e3e81afeee57ea05
 
 こちらのリポジトリを運用しておよそ1か月以上経過したのですが、かなり恩恵が大きいと感じたので何が良かったかを記事にまとめたいと思います。
