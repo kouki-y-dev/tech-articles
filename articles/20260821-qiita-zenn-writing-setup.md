@@ -359,7 +359,7 @@ Qiita CLI形式（`public/*.md`）と Zenn CLI形式（`articles/*.md`）の記�
 > [!NOTE]
 > **画像ファイルの一元管理＆直参照**:
 > - **画像ファイル管理**: すべての画像ファイル（ローカル画像・リモート画像）は、プロジェクトルート直下の `images/<slug>/` ディレクトリに一元保存されます。
-> - **Qiita 記事での画像パス**: Qiita 記事（`public/*.md`）では GitHub の Raw 画像 URL（`https://raw.githubusercontent.com/yama0308/tech-articles/main/images/<slug>/<filename>`）へ自動変換され、直参照されます。
+> - **Qiita 記事での画像パス**: Qiita 記事（`public/*.md`）では GitHub の Raw 画像 URL（`https://raw.githubusercontent.com/kouki-y-dev/tech-articles/main/images/<slug>/<filename>`）へ自動変換され、直参照されます。
 > - **Zenn 記事での画像パス**: Zenn 記事（`articles/*.md`）では `/images/<slug>/<filename>` へ自動変換されます。
 
 ## 変換手順

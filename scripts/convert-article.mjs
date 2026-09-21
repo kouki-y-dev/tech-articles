@@ -52,7 +52,7 @@ function convertBody(content, targetFormat) {
 async function convertImages(body, slug, sourceFormat, targetFormat, sourceDir) {
   let updatedBody = body;
   const imgRegex = /!\[(.*?)\]\((.*?)\)/g;
-  const rawBaseUrl = process.env.GITHUB_RAW_BASE_URL || 'https://raw.githubusercontent.com/yama0308/tech-articles/main';
+  const rawBaseUrl = process.env.GITHUB_RAW_BASE_URL || 'https://raw.githubusercontent.com/kouki-y-dev/tech-articles/main';
 
   const matches = [];
   let match;

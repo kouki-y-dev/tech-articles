@@ -112,10 +112,10 @@ Git操作って会社のリポジトリで練習がてら触ると事故った�
 ただ、特にアウトプットとかはしていない場合はGithubの草（コントリビュート）が何もない状態になってしまいます。
 
 こちらは私の2024年のGithubの草の状態です。なんとも悲しいですね。
-![null contribute](https://raw.githubusercontent.com/yama0308/tech-articles/main/images/20260921-tech-articles-git-manage/null_contribute.png)
+![null contribute](https://raw.githubusercontent.com/kouki-y-dev/tech-articles/main/images/20260921-tech-articles-git-manage/null_contribute.png)
 
 それに対して今年はこうなっています。記事管理リポジトリを組んだのは8月頃のなのですが、そこからは継続的に草が生えていると思います。
-![not null contribute](https://raw.githubusercontent.com/yama0308/tech-articles/main/images/20260921-tech-articles-git-manage/not_null_contribute.png)
+![not null contribute](https://raw.githubusercontent.com/kouki-y-dev/tech-articles/main/images/20260921-tech-articles-git-manage/not_null_contribute.png)
 
 技術記事をGit管理する事により、記事の執筆を行うだけでここに草が生えます。
 **これはブラウザ上での執筆では絶対に得られないメリットです。**
