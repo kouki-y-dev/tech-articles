@@ -1,14 +1,14 @@
 ---
 title: 【初心者向け】技術記事をGit管理するのはいいぞという話
 tags:
-  - '新人プログラマ応援'
-  - '駆け出しエンジニア'
-  - 'Git'
-  - 'GitHub'
-  - 'ポエム'
+  - 新人プログラマ応援
+  - 駆け出しエンジニア
+  - Git
+  - GitHub
+  - ポエム
 private: false
-updated_at: ''
-id: null
+updated_at: '2026-09-21T22:14:01+09:00'
+id: f241574e82a39073d96c
 organization_url_name: null
 slide: false
 ignorePublish: false
