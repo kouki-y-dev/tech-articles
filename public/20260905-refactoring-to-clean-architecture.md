@@ -100,7 +100,7 @@ https://github.com/kouki-y-dev/refactoring-to-clean-architecture
 
 例えば、クリーンアーキテクチャについて調べると確実に出てくるこの画像。
 
-![clean architecture](https://raw.githubusercontent.com/yama0308/tech-articles/main/images/20260905-refactoring-to-clean-architecture/cleanarchitecture.webp)
+![clean architecture](https://raw.githubusercontent.com/kouki-y-dev/tech-articles/main/images/20260905-refactoring-to-clean-architecture/cleanarchitecture.webp)
 
 これだけ見るとなんか複雑そうな印象を受けますが、この画像で伝えたい事はシンプルで、「**外側の物は内側の物しか見ず、内側から外側の物は見ない**」という事です。
 外側の円の物から内側に向かって矢印が書いてあるのはこれを表したいからになります。

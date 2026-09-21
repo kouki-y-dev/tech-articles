@@ -109,7 +109,7 @@ agreed_posting_campaign_term: false
 これを利用し、キャラクターのプロフィールや性格、口調等の情報を持ってきます。
 
 Gemini Notebookを開いたあと、「ソースを追加」からFast Researchを選ぶことができます。
-![fast research](https://raw.githubusercontent.com/yama0308/tech-articles/main/images/20260812-gemini-character/fast_research.png)
+![fast research](https://raw.githubusercontent.com/kouki-y-dev/tech-articles/main/images/20260812-gemini-character/fast_research.png)
 
 用意したプロンプトは3つ。これを順番に使用しデータソースを収集します。
 
@@ -136,7 +136,7 @@ Gemini Notebookを開いたあと、「ソースを追加」からFast Research�
 カスタム指示とは、Gemini Notebookごとにどのように回答するかを指示できる機能です。
 
 データソースを与えた後、「チャットを設定」からカスタム指示を設定できます。
-![custom](https://raw.githubusercontent.com/yama0308/tech-articles/main/images/20260812-gemini-character/lm_custom.png)
+![custom](https://raw.githubusercontent.com/kouki-y-dev/tech-articles/main/images/20260812-gemini-character/lm_custom.png)
 
 今回はこれを使って、データソースからそのキャラクターになりきるように指示を出します。
 
@@ -162,7 +162,7 @@ Gemini Notebookを開いたあと、「ソースを追加」からFast Research�
 
 ここからが今回の真骨頂です。Gemini Notebook に構築したキャラクターの人格をGeminiに降臨させて会話させます。いざ、夢のコラボ。
 今回はGeminiの機能を利用してGemini Notebookをデータソースにすることでこれを實現します。
-![lm_datasource](https://raw.githubusercontent.com/yama0308/tech-articles/main/images/20260812-gemini-character/lm_datasource.png)
+![lm_datasource](https://raw.githubusercontent.com/kouki-y-dev/tech-articles/main/images/20260812-gemini-character/lm_datasource.png)
 
 チャットから先程構築したキャラクターのGemini Notebookをデータソースに指定しつつ、プロンプトで以下を与えることで会話を実現します。
 Geminiには会話の進行役を担当してもらうイメージです。
