@@ -7,11 +7,13 @@ tags:
   - 書評
   - ポエム
 private: false
-updated_at: null
-id: null
+updated_at: '2026-10-05T07:33:52+09:00'
+id: d0680138e423aa5ef038
 organization_url_name: null
 slide: false
 ignorePublish: false
+posting_campaign_uuid: null
+agreed_posting_campaign_term: false
 ---
 
 :::note info
